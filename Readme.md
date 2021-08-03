@@ -193,7 +193,7 @@ $ npm run format
 $ npm install --save-dev jest ts-jest @types/jest
 ```
 
-続けて、jestの設定ファイルを作成します。
+続けて、jestの設定ファイルを作成します。package.jsonの`scripts`フィールドに`"test": "jest"`という行が追加されていることに注意してください。
 ```
 $ npx jest --init
 ```
@@ -335,7 +335,97 @@ test('add_function_returns_sum_of_two_number', () => {
 このように、テストを書く→テストに失敗する→テストをパスするように実装する→リファクタリングをする、というサイクルを細かい粒度で回していくのがテスト駆動開発です。
 今回は単純な例だったのでリファクタリングは行いませんでしたが、テストが通る状態を維持することによってリファクタリングのしやすさは格段に向上します。
 
-### WebPack
+### webpack
+
+我々の最終目標はブラウザ上でオセロゲームを実装することでした。[webpack](https://webpack.js.org/)は依存関係をもつモジュール群を静的なアセットとしてバンドルするツールです。適切に設定することで内部的に`typescript`パッケージを呼び出してTypeScriptのトランスパイルを同時にすることができます。
+
+```
+$ npm install --save-dev webpack webpack-cli webpack-dev-server ts-loader
+```
+
+つづけてwebpack用の設定ファイルを作成します。ファイル名は`webpack.config.js`です。
+```javascript
+const path = require("path");
+
+module.exports = {
+  entry: {
+    index: path.join(__dirname, 'src/index.ts'),
+  },
+  output: {
+    path: path.join(__dirname, 'dist'),
+  },
+  module: {
+    rules: [
+      { test: /\.ts$/, use: 'ts-loader' },
+    ],
+  },
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
+  target: ["web"],
+  mode: process.env.NODE_ENV || "development",
+  devtool: 'inline-source-map',
+  devServer: {
+    contentBase: path.join(__dirname, 'dist')
+  }
+};
+```
+
+5行目で`src/index.ts`をエントリーポイントとして指定しています。このファイルから再帰的に依存モジュールをたどり、`index.js`というファイル名ですべてのモジュールが含まれたファイルを出力します。
+8行目で出力先ディレクトリを指定しており、結果的に`dist/index.js`が出力されることになります。
+12行目では`.ts`という拡張子のファイルをwebpackが処理するときに`ts-loader`というものを使うように設定しています。`ts-loader`は`typescript`パッケージを使用してTypeScriptファイルをトランスパイルする役割があります。
+
+`src/index.ts`を用意します。アラートウィンドウで"Hello World!"と表示をして、以前作った`add`関数を呼び出すプログラムです。
+```typescript
+import { add } from './add';
+
+alert("Hello World!\n 10+15=" + add(10,15));
+```
+
+それではwebpackを走らせてみましょう。
+```
+$ npx webpack
+```
+
+`dist/index.js`というファイルができていることが確認できると思います。
+
+続けて`dist/index.html`を作成しておきます。先程生成された`dist/index.js`を読み込むだけのページです。
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Othello</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script defer src="index.js"></script>
+  </head>
+  <body>
+  </body>
+</html>
+```
+
+以下のコマンドを実行してください。`./dist/`ディレクトリ以下のファイルをサーブする開発用のWebサーバーを実行することができます。これによって、ブラウザから`dist/index.html`や`dist/index.js`にアクセスできるようになります。このサーバーを実行している間はソースコードの変更が監視され、変更が検知されると自動的にビルドが実行されます。
+
+```
+$ npx webpack serve
+```
+
+[http://localhost:8080](http://localhost:8080)をブラウザで開いてください。以下のように表示されたら成功です。
+```
+Hello World!
+10+15=25
+```
+
+最後に、開発中に何度も使うことになるコマンドをnpmのタスクランナーに登録しておきましょう。
+package.jsonに以下のように追記してください。
+```json
+  "scripts": {
+    "build": "webpack",
+    "serve": "webpack serve",
+    "format": "prettier --write ./src",
+    "test": "jest"
+  },
+```
 
 ## CUIで遊べるオセロを作る
 
