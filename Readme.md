@@ -134,7 +134,7 @@ Helllo World!!
   "include": ["src/**/*.ts"],
   "compilerOptions": {
     "target": "ES2019",
-    "module": "ES6",
+    "module": "commonjs",
     "sourceMap": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -428,44 +428,263 @@ package.jsonに以下のように追記してください。
 ```
 
 ## CUIで遊べるオセロを作る
+我々の最終目標はブラウザ上で遊べるオセロゲームを作ることでしたが、はじめはもう少しシンプルなものから始めましょう。簡単なものから段階を踏んで複雑なものを作っていくのはとても良いプラクティスです。
 
-### 盤面の持ち方・盤面の表示
+ブラウザで動作するオセロゲームの前段階として、CUI(キャラクタインターフェース)であるターミナル上で動作するオセロゲームを作っていきましょう。
 
-### 盤面の情報を取得する
-#### 石の数
+以下に動作イメージを提示します。この通りに作る必要は全くありません。あくまで理解を助けるためのサンプルです。
 
-#### 終了を判定する
+```
+$ npm run game-start
+ゲームを開始します。
+  a b c d e f g h
+  - - - - - - - -
+1| | | | | | | | |
+2| | | | | | | | |
+3| | | |-| | | | |
+4| | |-|o|x| | | |
+5| | | |x|o|-| | |
+6| | | | |-| | | |
+7| | | | | | | | |
+8| | | | | | | | |
+  - - - - - - - -
+  黒(x): 2
+  白(o): 2
 
-#### 勝敗を判定する
+黒(x)の手番です。座標を入力してください。例: c4
+> c4
 
-#### 石を置けるか判定する
+  a b c d e f g h
+  - - - - - - - -
+1| | | | | | | | |
+2| | | | | | | | |
+3| | |-| |-| | | |
+4| | |x|x|x| | | |
+5| | |-|x|o| | | |
+6| | | | | | | | |
+7| | | | | | | | |
+8| | | | | | | | |
+  - - - - - - - -
+  黒(x): 4
+  白(o): 1
 
-#### 有効手を列挙する
+白(o)の手番です。座標を入力してください。例: c3
+> c3
+.
+.
+.
+```
 
-#### ある方向の返される石を列挙する
+### 標準入力・標準出力を扱う
+`src/main.ts`を編集しましょう。
 
-#### すべての方向の返される石を列挙する
+```typescript
+import { createInterface } from 'readline';
 
+const main = () => {
+  console.log('好きな数字を入力してください');
+  process.stdout.write('> ');
 
-### 盤面を操作する
-#### 石を置く（単に）
+  const reader = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-#### 一つの石をひっくり返す
+  reader.on('line', function (line) {
+    console.log('あなたが入力したのは"' + line + '"です');
+    console.log('');
+    console.log('好きな数字を入力してください');
+    process.stdout.write('> ');
+  });
+};
 
-#### 石をおいて、適切にひっくり返す
+main();
+```
 
-#### パスする
+以下のように実行してください。終了するときは`Ctrl-C`です。
+```
+$ npx ts-node src/main.ts
+```
 
+`console.log`と`process.stdout.write`はどちらも標準出力に出力する関数ですが、前者は出力後に自動で改行がはいるという違いがあります。
 
-### インターフェースをつくる
+`reader.on('line', function)`で与えた関数はターミナルでエンターキーを押す度に実行されます。そのとき引数には入力された文字列が与えられます。
 
-#### 標準入力をあつかう
+この単純なゲームを少しずつ改善していきます。
+ゲームを開始するコマンドをタスクランナーに登録しておきましょう。`package.json`に追記します。
+```
+  "scripts": {
+    "start-game": "ts-node src/main.ts",
+```
 
-#### 盤面を初期化する
+### 盤面の表示
+`src/othello.ts`というファイルを作成しましょう。これ以降オセロのコア機能部分はこのファイルに記述することにします。こうすることで、コードの再利用性が高まります。これ以降も適宜ファイルを分けながら開発していきましょう。
 
-#### ターンを進める
+まずはオセロの盤面を表現する型`Board`を定義します。
+どのような構造体でも構いません。以下は一つの例です。
+```
+export type Board = {
+  black: boolean[][];
+  white: boolean[][];
+  black_turn: boolean;
+}
+```
 
-#### 勝敗を表示する
+初期盤面を生成する関数を作成します。以下のような関数を実装していきます。
+```
+export function generate_initial_board(): Board {
+  ...
+}
+```
+
+まずはテストを書きましょう。`src/othello.test.ts`というファイルを作成してください。
+```typescript
+import { Board, generate_initial_board } from './othello';
+
+test('generate_initial_board', () => {
+  const board = generate_initial_board();
+  expect(len(board.black)).toBe(8);
+  expect(len(board.black[0])).toBe(8);
+  expect(board.black[0][0]).toBe(false);
+  expect(board.black[4][3]).toBe(true);
+  expect(board.black[3][3]).toBe(false);
+  expect(len(board.white)).toBe(8);
+  expect(len(board.white[0])).toBe(8);
+  expect(board.white[0][0]).toBe(false);
+  expect(board.white[4][3]).toBe(false);
+  expect(board.white[3][3]).toBe(true);
+  expect(board.black_turn).toBe(true);
+});
+```
+
+テストが失敗することを確認して、テストが通るように実装してください。
+
+main関数の実装を進めていきます。main関数の最初に盤面を初期化する処理をいれて盤面を表示しましょう。
+このとき盤面を文字列化する関数があると便利です。今回はテストも自分で書いてみてください。テストを書いてその後実装してください。`src/main.ts`内で`src/othello.ts`で定義した関数や型を使用するためには、`src/othello.test.ts`の先頭に書いたようなimport文を書く必要があります。
+```typescript
+export function stringify_board(board: Board): string {
+  ...
+}
+```
+
+改行を含む文字列を扱うときにはテンプレートリテラル(バッククォート)が便利です。
+```typescript
+const raw_string = `apple
+banana
+suika`;
+```
+
+つぎに盤面の下に黒白それぞれのスコアを表示します。
+```
+  黒(x): 2
+  白(o): 2
+```
+
+スコアを計算する関数を作りましょう。しつこいようですが**テスト**を書いてください！！
+```typescript
+// [黒の石数, 白の石数]を返す
+export function calc_score(board: Board): [number, number] {
+  ...
+}
+```
+
+最後に手番を表示するようにして、この節はおしまいです。
+```
+$ npm run game-start
+ゲームを開始します。
+  a b c d e f g h
+  - - - - - - - -
+1| | | | | | | | |
+2| | | | | | | | |
+3| | | | | | | | |
+4| | | |o|x| | | |
+5| | | |x|o| | | |
+6| | | | | | | | |
+7| | | | | | | | |
+8| | | | | | | | |
+  - - - - - - - -
+  黒(x): 2
+  白(o): 2
+
+黒(x)の手番です。座標を入力してください。例: c4
+```
+
+### 石を置く
+与えられた座標に石をおいて盤面を変化させてみましょう。いまのところ与えられた座標が合法手かどうかは考えなくて良いことにします。
+
+`put_stone()`という関数をつくることにします。以下のような関数になるはずです。テストを書いてから実装しましょう。
+```typescript
+export function put_stone(point: [number, number], black_turn: boolean, board: Board) {
+  ...
+}
+```
+
+石をひっくり返す関数も作成します。
+```typescript
+export function flip_stone(point: [number, number], board: Board) {
+  ...
+}
+```
+
+手番を進める関数も作成します。
+```typescript
+export function move_turn(board: Board) {
+  ...
+}
+```
+
+これらの関数を`src/main.ts`内で使用するためには"c4"といった座標の文字列を`[2, 3]`といった`[number, number]`の型に変換する関数があると便利そうです。
+```typescript
+export function parse_coord(coord_str: string): [number, number] {
+  ...
+}
+```
+
+この節で作成した関数を`src/main.ts`に組み込んでいきましょう。
+ここまでで我々のゲームは黒と白の石を交互に好きな位置におけるゲームになっているとおもいます。
+
+### 合法手以外を打てないようにする
+好き勝手な位置に石を置かれてはゲームが成立しないので、ユーザーからの入力が合法手であるかをする必要があります。
+```typescript
+export function is_valid_move(p: [number, number], board: Board): boolean {
+  ...
+}
+```
+
+ある手が合法であるかを確認するためには、縦横斜め方向にグリッドを探索する必要があります。
+このような探索では以下のような定数を用意しておいてベクトル同士の演算として扱うと簡潔に書けることが多いです。
+```typescript
+const DIRECTIONS = {
+  up:    [-1,  0],
+  down:  [ 1,  0],
+  left:  [ 0, -1],
+  right: [ 0,  1],
+  ul:    [-1, -1],
+  ur:    [-1,  1],
+  dl:    [ 1, -1],
+  dr:    [ 1,  1],
+} as const;
+
+function add_vec(p: readonly [number, number], q: readonly [number, number]): [number, number] {
+  ...
+}
+
+const new_p = add_vec(p, DIRECTIONS.up);
+```
+
+探索中に盤面の配列をオーバーした添字でアクセスするとエラーが起きてしまうことに注意してください。
+そのようなケースを扱うテストを用意しておくと良いですね。
+
+`is_valid_move`関数ができたら、ユーザーが非合法手を入力したときに怒ってくれるように`src/main.ts`を変更しておいてください。
+いまのところ、挟まれた石がひっくり返るというルールに関して考えなくても良いことにします。
+
+### 合法手を表示する
+
+### 挟まれた石をひっくり返す
+ある方向の返される石を列挙する
+すべての方向の返される石を列挙する
+
+### パス、終了判定、勝敗判定
 
 
 ## ブラウザで遊べるオセロを作る
