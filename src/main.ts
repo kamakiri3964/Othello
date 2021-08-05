@@ -4,6 +4,10 @@ import {
   calc_score,
   generate_initial_board,
   stringify_board,
+  put_stone,
+  flip_stone,
+  move_turn,
+  parse_coord,
 } from './othello';
 
 const main = () => {
