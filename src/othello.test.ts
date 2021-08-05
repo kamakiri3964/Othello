@@ -54,46 +54,46 @@ test('calc_score', () => {
   expect(score[1]).toBe(2);
 });
 
-test("put_stone", () => {
-  const board = generate_initial_board()
-  let result = put_stone([0,0], true, board)
-  expect(result.black[0][0]).toBe(true)
-  expect(result.black[0][1]).toBe(false)
-  result = put_stone([1,0], false, board)
-  expect(result.black[1][0]).toBe(false)
-  expect(result.white[1][0]).toBe(true)
-  result = put_stone([4,3], true, board)
-  expect(result.black[4][3]).toBe(true)
-  result = put_stone([3,3], false, board)
-  expect(result.white[3][3]).toBe(true)
-})
+test('put_stone', () => {
+  const board = generate_initial_board();
+  let result = put_stone([0, 0], true, board);
+  expect(result.black[0][0]).toBe(true);
+  expect(result.black[0][1]).toBe(false);
+  result = put_stone([1, 0], false, board);
+  expect(result.black[1][0]).toBe(false);
+  expect(result.white[1][0]).toBe(true);
+  result = put_stone([4, 3], true, board);
+  expect(result.black[4][3]).toBe(true);
+  result = put_stone([3, 3], false, board);
+  expect(result.white[3][3]).toBe(true);
+});
 
-test("flip_stone", () => {
-  const board = generate_initial_board()
-  let result = flip_stone([3,3], board)
-  expect(result.black[3][3]).toBe(true)
-  expect(result.white[3][3]).toBe(false)
-  result = flip_stone([4,4], board)
-  expect(result.black[4][4]).toBe(true)
-  expect(result.white[4][4]).toBe(false)
-  result = flip_stone([4,3], board)
-  expect(result.black[4][3]).toBe(false)
-  expect(result.white[4][3]).toBe(true)
-})
+test('flip_stone', () => {
+  const board = generate_initial_board();
+  let result = flip_stone([3, 3], board);
+  expect(result.black[3][3]).toBe(true);
+  expect(result.white[3][3]).toBe(false);
+  result = flip_stone([4, 4], board);
+  expect(result.black[4][4]).toBe(true);
+  expect(result.white[4][4]).toBe(false);
+  result = flip_stone([4, 3], board);
+  expect(result.black[4][3]).toBe(false);
+  expect(result.white[4][3]).toBe(true);
+});
 
-test("move_turn", () => {
-  const board = generate_initial_board()
-  let result = move_turn(board)
-  expect(result.black_turn).toBe(false)
-  result = move_turn(board)
-  expect(result.black_turn).toBe(true)
-})
+test('move_turn', () => {
+  const board = generate_initial_board();
+  let result = move_turn(board);
+  expect(result.black_turn).toBe(false);
+  result = move_turn(board);
+  expect(result.black_turn).toBe(true);
+});
 
-test("parse_coord", () => {
-  let result = parse_coord("c4")
-  expect(result[0]).toBe(3)
-  expect(result[1]).toBe(2)
-  result = parse_coord("a6")
-  expect(result[0]).toBe(5)
-  expect(result[1]).toBe(0)
-})
+test('parse_coord', () => {
+  let result = parse_coord('c4');
+  expect(result[0]).toBe(3);
+  expect(result[1]).toBe(2);
+  result = parse_coord('a6');
+  expect(result[0]).toBe(5);
+  expect(result[1]).toBe(0);
+});
