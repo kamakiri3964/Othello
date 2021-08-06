@@ -523,11 +523,24 @@ $ npx ts-node src/main.ts
 まずはオセロの盤面を表現する型`Board`を定義します。
 どのような構造体でも構いません。以下は一つの例です。
 ```
+export type Row = [
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean
+];
+
+export type BoardArray = [Row, Row, Row, Row, Row, Row, Row, Row];
+
 export type Board = {
-  black: boolean[][];
-  white: boolean[][];
+  black: BoardArray;
+  white: BoardArray;
   black_turn: boolean;
-}
+};
 ```
 
 初期盤面を生成する関数を作成します。以下のような関数を実装していきます。
@@ -543,13 +556,13 @@ import { Board, generate_initial_board } from './othello';
 
 test('generate_initial_board', () => {
   const board = generate_initial_board();
-  expect(len(board.black)).toBe(8);
-  expect(len(board.black[0])).toBe(8);
+  expect(board.black.length).toBe(8);
+  expect(board.black[0].length).toBe(8);
   expect(board.black[0][0]).toBe(false);
   expect(board.black[4][3]).toBe(true);
   expect(board.black[3][3]).toBe(false);
-  expect(len(board.white)).toBe(8);
-  expect(len(board.white[0])).toBe(8);
+  expect(board.white.length).toBe(8);
+  expect(board.white[0].length).toBe(8);
   expect(board.white[0][0]).toBe(false);
   expect(board.white[4][3]).toBe(false);
   expect(board.white[3][3]).toBe(true);
@@ -707,11 +720,110 @@ CUIオセロゲームの最後の節です。
 - ゲーム終了時に勝敗に関するメッセージを出力する
 
 ## ブラウザで遊べるオセロを作る
+webpackの節では`dist/index.html`と`src/index.ts`を編集しました。
+`dist`ディレクトリは自動生成したファイルだけが入っていてほしいような気がするので、少し設定を変更しましょう。
+
+Webpackのプラグインを追加します。
+```
+npm install --save-dev html-webpack-plugin
+```
+
+`src/index.html`というファイルを作成します。
+```html
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title><%= htmlWebpackPlugin.options.title %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+</body>
+</html>
+```
+
+`webpack.config.js`を編集します。
+```javascript
+const path = require("path");
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
+module.exports = {
+  ...
+  plugins: [
+    new HtmlWebpackPlugin({
+      chunks: ['index'],
+      filename: 'index.html',
+      title: 'Othello',
+      template: 'src/index.html'
+    }),
+  ],
+  ...
+};
+```
 
 ### Canvas
+オセロの盤面をページ上に表示するのにCanvasというHTMLの仕様を使います。Canvasを使用することで線分・長方形・円といった図形や画像を表示することができます。
 
+`src/index.ts`を編集してCanvasを試してみましょう。
+```typescript
+const main = () => {
+  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  canvas.height = 800;
+  canvas.width = 800;
+  const ctx = canvas.getContext('2d')!;
+
+  // 長方形に塗りつぶす 左上(100, 100) 幅: 400, 高さ: 400
+  ctx.fillStyle = 'green';
+  ctx.fillRect(100, 100, 400, 400);
+
+  // 線をひく (100, 0) から (500, 600)
+  ctx.strokeStyle = 'gray';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(100, 0);
+  ctx.lineTo(500, 600);
+  ctx.stroke();
+
+  // 円 中心(200, 300) 半径10
+  ctx.strokeStyle = 'gray';
+  ctx.lineWidth = 2;
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.arc(200, 300, 10, 0, Math.PI * 2, false);
+  ctx.fill();
+  ctx.stroke();
+};
+
+main();
+```
+
+実行してブラウザで結果を見てみましょう。
+```
+$ npm run serve
+```
+
+これ以降ブラウザ上で実行するJavaScriptに変換するので`tsconfig.json`を編集します。
+`module`フィールドを以下のように変換してください。
+```json
+    "module": "esNext",
+```
+
+引き続き`game-start`タスクが正常に実行できるように`package.json`を編集しておきましょう。
+```json
+  "scripts": {
+    "start-game": "ts-node -O '{\"module\": \"commonjs\"}' src/main.ts",
+```
+
+### 盤面を表示する
+
+### ゲームループ
+
+### マウス入力を扱う
 
 ## AIをつくる
+
+### ランダムなAI
 
 ### 盤面評価
 
