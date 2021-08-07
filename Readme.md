@@ -693,7 +693,7 @@ const new_p = add_vec(p, DIRECTIONS.up);
 
 ### 合法手を表示する
 もう少し我々のゲームを洗練させるために、せっかくなので着手可能位置のヒントを表示してあげることにしましょう。
-この機能を実現するためにはすべての合法手を列挙する必要があります。この機能をもつ関数を作成しましょう。
+この機能を実現するためにはすべての合法手を列挙する必要があります。この機能をもつ関数`all_valid_state`を作成しましょう。
 
 前節で実装した`is_valid_move`をうまく使うと簡単に実装できると思います。
 
@@ -892,6 +892,61 @@ export function draw_piece(i: number, j: number, canvas: HTMLCanvasElement): voi
 `src/index.ts`から`draw_board`を呼んで盤面を表示しましょう。
 
 ### ゲームループ
+一般的なコンピュータゲームでは一定の時間間隔ごとにゲームの内部状態や画面描画を更新するようなゲームループの仕組みがあります。CUIのオセロゲームで行ったようにユーザーからの入力があるまで状態の更新を行わないようなゲームループも考えられます。
+今回は一定の時間間隔で更新するゲームループを採用しましょう。
+
+`src/game.ts`ファイルを作成します。
+```typescript
+import { Board, generate_initial_board } from "./othello";
+
+export type Game = {
+  last: number;      // 最後に盤面の更新をした時刻 (ms)
+  interval: number;  // (interval)ms 毎に盤面の更新を行う
+  board: Board;
+  canvas: HTMLCanvasElement;
+};
+
+export function create_game(canvas: HTMLCanvasElement): Game {
+  return {
+    last: performance.now(),
+    interval: 1000, // ms
+    board: generate_initial_board(),
+    canvas: canvas
+  }
+}
+
+export function start_loop(game: Game): void {
+  const run = (now: number) => {
+    let delta = now - game.last;
+    while (delta >= game.interval) {
+      delta -= game.interval;
+      game.last = now - delta;
+
+      // ここで盤面の更新・描画処理を行う
+      console.log(game.last);
+    }
+    requestAnimationFrame(run);
+  };
+  requestAnimationFrame(run);
+}
+```
+
+`src/index.ts`
+```typescript
+const main = () => {
+  const game = create_game(canvas);
+  start_loop(game);
+};
+```
+
+どのような動作をするかブラウザで確認してみましょう。`console.log`の出力をブラウザで確認するには、chromeであればページ上で右クリックをして"Inspect"を選択して開発者ツールを表示します。開発者ツールの"Console"タブを開いてください。1秒に一回数値が表示されているのが確認できると思います。
+
+厳密には環境によって異なりますが、基本的にはブラウザの画面更新は1/60秒に一度行われます。`requestAnimationFrame`関数に渡された関数(`run`)は次回の画面更新時に呼び出されることになります。`run`関数の中では再度`requestAnimationFrame(run)`が呼ばれている再帰構造になっているので、基本的には1/60秒毎に`run`関数が呼び出され続けるようになっているわけです。
+
+`run`関数内部では、最後の画面更新時刻`last`と現在時刻`now`を比較して、その差が`interval`よりも大きいときに画面更新を行うようにしています。これによって1秒毎に出力する仕組みです。
+
+この節では、1秒毎にランダムな手でオセロゲームを更新する処理を実装してみましょう。
+前節で実装した`draw_board`関数や前章で実装した`next_state`関数、`all_valid_move`関数を使用するとよいでしょう。
 
 ### マウス入力を扱う
 
