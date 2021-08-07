@@ -997,10 +997,95 @@ function register_mouse_input_listner(game: Game): void {
 
 `update_game`関数を編集して、`user_input`に応じて盤面を更新する処理を実装しましょう。ユーザーの入力を処理した後には`user_input`の値を消去しておいて、入力を重複して処理することを防いでください。
 canvas上の座標をオセロ盤面の行数・列数に変換する関数があると便利そうです。この関数は描画処理を担当する`src/drawer.ts`ファイルに記述するのがよいと思います。
+`update_game`関数の中身は"盤面の状態を更新"して、更新があれば"盤面を描画する"処理ですから、以下のように整理できそうです。`update_state`関数は盤面を更新して更新があれば`true`を返すようにします。`update_state`関数は描画に関係しないのでテストを書くことも簡単そうです。
+```typescript
+function update_game(game: Game): void {
+  if (update_state(game)) {
+    draw_board(game.board)
+  }
+}
+```
 
 最後に1秒に一回の更新ではプレイ感が非常に悪いので、1/60秒に一度の更新にしておきましょう。
 
-ここまででランダムプレイヤーと対戦するオセロゲームができているはずです。
+ここまででランダムプレイヤーと対戦するオセロゲームができているはずです。かなり完成が近づいてきました。
+
+### 盤面以外の表示など
+最後にゲームとしての体裁を整えていきましょう。
+
+#### 手番・スコアの表示
+手番やスコアといった盤面以外の情報を表示します。
+`src/index.html'に情報を表示するためのタグを追加します。
+```html
+...
+<body>
+  <canvas id="canvas"></canvas>
+  <div>
+    <span id="message"></span>
+  </div>
+</body>
+...
+```
+
+`Game`構造体に新たなフィールドを追加しましょう。
+```
+export type Game = {
+  last: number;      // 最後に盤面の更新をした時刻 (ms)
+  interval: number;  // (interval)ms 毎に盤面の更新を行う
+  board: Board;
+  canvas: HTMLCanvasElement;
+  user_input: [number, number] | null;
+  message_holder: HTMLSpanElement;
+};
+```
+
+しかるべきタイミングで以下のように`innerText`に値をセットすることでメッセージを出力できます。
+```typescript
+game.message_holder.innerText = "メッセージ";
+```
+
+`create_message(board: Board): string`のような関数を作成すればテストしやすくなるでしょう。
+
+#### 開始前ページ
+現状ではページを開くと勝手に対局が始まってしまいます。これでは少しぶっきらぼうな感じがしますね。
+'Game'構造体に新たなフラグを導入して、ゲームが進行中かどうかを管理できるようにしてみましょう。
+
+`create_game`内で以下の処理を行います。
+1. 開始前のメッセージを表示する。例: 'ゲームを開始するのに"開始"ボタンを押してください'
+2. "開始"ボタンを表示する
+3. "開始"ボタンのイベントリスナー登録する
+    1. 進行中フラグをオンにする
+    2. ボタンを表示にする
+
+`update_game`ではゲーム進行フラグがオン出ないときには状態の更新を行わないようにしておきます。
+
+ボタンの表示・非表示を切り替えるには以下のようにするとよいです。
+```html
+<button id="start_button">開始</button>
+```
+
+```typescript
+const start_button = document.getElementById('start_button') as HTMLButtonElement;
+start_button.style.visibility = 'hidden';   // 非表示
+start_button.style.visibility = 'visible';  // 表示
+```
+
+余裕があれば、"開始"ボタンの代わりに先手・後手を選べるようにしてみてください。
+他にも人間同士の対局ができるようにしてもよいですね。
+
+#### 終了時の処理
+盤面更新時に終了の判定をして終了した旨のメッセージを表示するようにしてください。同時に進行中フラグをオフにして開始ボタンを再表示しましょう。
+再度ゲームを開始できるように、開始時のイベントリスナーで盤面の初期化処理が走るようにします。
+
+#### 盤面サイズの自動調整
+canvasのサイズは固定になっていますが、さまざまなデバイスでプレイされることを考えるとウィンドウの幅に合わせて自動調節したほうが良さそうに思われます。
+ブラウザの横幅は`document.body.clientWidth`、高さは`document.body.clientHight`で取得できます。800pxと横幅・高さの中で、最も小さいものを盤面のサイズに採用すれば良さそうです。
+
+`draw_board`関数内でこれらの値をチェックして、`canvas.hight`、`canvas.width`を設定すると、ウィンドウサイズが変わったときにも対応できます。
+
+#### 待った
+これは少し発展的な課題になりますが、もし時間があれば"待った"機能を実装してもよいと思います。
+`Game`構造体で`board`フィールドの代わりに`board_history`のように盤面の履歴を持っておくことで実現できます。
 
 ## AIをつくる
 
