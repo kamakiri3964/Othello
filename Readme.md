@@ -915,15 +915,18 @@ export function create_game(canvas: HTMLCanvasElement): Game {
   }
 }
 
+function update_game(game: Game): void {
+  console.log(game.last);
+}
+
 export function start_loop(game: Game): void {
   const run = (now: number) => {
     let delta = now - game.last;
     while (delta >= game.interval) {
       delta -= game.interval;
       game.last = now - delta;
-
       // ここで盤面の更新・描画処理を行う
-      console.log(game.last);
+      update_game(game);
     }
     requestAnimationFrame(run);
   };
@@ -949,6 +952,55 @@ const main = () => {
 前節で実装した`draw_board`関数や前章で実装した`next_state`関数、`all_valid_move`関数を使用するとよいでしょう。
 
 ### マウス入力を扱う
+この節ではユーザーからのマウス入力を受けて、駒を置く処理を作っていきましょう。
+ユーザーは黒番固定ですすめていくことにします。
+
+ブラウザでユーザーの入力を扱うときにはイベント駆動と呼ばれるプログラミングモデルが使用されます。
+ページ上のcanvas要素に対するマウスクリックのようなイベントに対してイベントリスナーという関数を登録します。
+プログラマーはこの登録をするだけでブラウザ側がユーザーのクリックを検知して登録したイベントリスナーを呼び出してくれます。
+
+```typescript
+...
+const main = () => {
+  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  canvas.height = 800;
+  canvas.width = 800;
+  ...
+  canvas.addEventListener('click', (e: MouseEvent) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    alert(x + ", " + y);
+  })
+};
+...
+```
+
+canvas上をクリックするたびにアラートウィンドウが表示されることが確認できると思います。
+
+さて、それではこのマウス入力機能を私たちのゲームに導入していきましょう。
+全体の方針は以下のような形になります。
+`Game`構造体に`user_input`のような新たなフィールドを追加します。イベントリスナーではマウスクリックを検知したときに`user_input`にユーザーの入力を保存しておきます。
+次の盤面更新時にユーザーの手番であれば`user_input`の値に応じて盤面を進行させます。
+
+まずは、`Game`に`user_input`フィールドを追加します。このフィールドの型はユーザー入力がある場合は座標でない場合は`null`になります。このような型は`[number, number] | null`のように表現できます。`create_game`関数を同時に更新することを忘れないでください。
+
+イベントリスナーを登録する関数`register_mouse_input_listner`を作成します。
+この中ではイベントリスナーを作成し、それをcanvas要素のイベントリスナーとして追加します。
+イベントリスナーではマウスの座標を読み取り、それを`game`変数の`user_input`フィールドに保存するようにしましょう。
+```typescript
+function register_mouse_input_listner(game: Game): void {
+  ...
+}
+```
+この関数はゲーム初期化時に一度だけ呼ばれれば良いので`create_game`内で呼び出すことにしておきます。
+
+`update_game`関数を編集して、`user_input`に応じて盤面を更新する処理を実装しましょう。ユーザーの入力を処理した後には`user_input`の値を消去しておいて、入力を重複して処理することを防いでください。
+canvas上の座標をオセロ盤面の行数・列数に変換する関数があると便利そうです。この関数は描画処理を担当する`src/drawer.ts`ファイルに記述するのがよいと思います。
+
+最後に1秒に一回の更新ではプレイ感が非常に悪いので、1/60秒に一度の更新にしておきましょう。
+
+ここまででランダムプレイヤーと対戦するオセロゲームができているはずです。
 
 ## AIをつくる
 
