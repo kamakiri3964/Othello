@@ -771,28 +771,30 @@ const main = () => {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement;
   canvas.height = 800;
   canvas.width = 800;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
 
-  // 長方形に塗りつぶす 左上(100, 100) 幅: 400, 高さ: 400
-  ctx.fillStyle = 'green';
-  ctx.fillRect(100, 100, 400, 400);
+  if (ctx != undefined) {
+    // 長方形に塗りつぶす 左上(100, 100) 幅: 400, 高さ: 400
+    ctx.fillStyle = 'green';
+    ctx.fillRect(100, 100, 400, 400);
 
-  // 線をひく (100, 0) から (500, 600)
-  ctx.strokeStyle = 'gray';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(100, 0);
-  ctx.lineTo(500, 600);
-  ctx.stroke();
+    // 線をひく (100, 0) から (500, 600)
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(100, 0);
+    ctx.lineTo(500, 600);
+    ctx.stroke();
 
-  // 円 中心(200, 300) 半径10
-  ctx.strokeStyle = 'gray';
-  ctx.lineWidth = 2;
-  ctx.fillStyle = 'white';
-  ctx.beginPath();
-  ctx.arc(200, 300, 10, 0, Math.PI * 2, false);
-  ctx.fill();
-  ctx.stroke();
+    // 円 中心(200, 300) 半径10
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(200, 300, 10, 0, Math.PI * 2, false);
+    ctx.fill();
+    ctx.stroke();
+  }
 };
 
 main();
@@ -806,16 +808,88 @@ $ npm run serve
 これ以降ブラウザ上で実行するJavaScriptに変換するので`tsconfig.json`を編集します。
 `module`フィールドを以下のように変換してください。
 ```json
-    "module": "esNext",
+    "module": "esnext",
 ```
 
-引き続き`game-start`タスクが正常に実行できるように`package.json`を編集しておきましょう。
+`commonjs`というのはTypeScriptをNode.jsで実行できるように変換する設定で、`esnext`はブラウザ用の設定です。この変更に伴って`src/main.ts`が実行できなくなっているので、引き続き`game-start`タスクが正常に実行できるように`package.json`を編集しておきましょう。
 ```json
   "scripts": {
     "start-game": "ts-node -O '{\"module\": \"commonjs\"}' src/main.ts",
 ```
 
 ### 盤面を表示する
+ゲームの盤面を表現するには盤と駒をそれぞれ表示する必要がありそうです。まずは盤を表示する関数から作成していきましょう。
+
+`src/drawer.ts`というファイルを作成して描画関係の処理はここに記述することにします。
+盤を表示する`draw_grid`関数を作成することにします。この関数のように演算の結果が戻り値以外にも影響を与える関数のことを"副作用を持つ"といいます。このような副作用を持つ関数はテストをするのが難しくバグに繋がる可能性が高いので、一般的にはできる限り避けるべきですが避けるのが難しいこともあります。今回のケースでは`CanvasRenderingContext2D`オブジェクトをモックすることでテストを書くこともできますが省略しておきます。興味があれば調べて実装してみてください。
+```typescript
+export function draw_grid(ctx: CanvasRenderingContext2D): void {
+  ...
+}
+```
+
+実装できたら`src/index.ts`からこの関数を呼び出してみます。前の節で書いた`main`関数内の描画処理は削除して構わないです。
+
+今のところ盤面のサイズは800×800で固定していますが、これはユーザーの画面サイズに合わせて変化させた方が良さそうです。
+`draw_grid`関数を`height`, `width`を追加で受け取るように書き換えてみましょう。
+```typescript
+export function draw_grid(ctx: CanvasRenderingContext2D, height: number, width: number): void {
+  ...
+}
+```
+
+今後描画に関するあらゆる関数は`ctx, height, width`のセットを引数にとることが予想できるので、代わりに`canvas: HTMLCanvasElement`を与えるようにした方がよさそうです。
+```typescript
+export function draw_grid(canvas: HTMLCanvasElement): void {
+  ...
+}
+```
+
+とはいえ、いつも`height`, `width`を気にしながらコードを書くのは面倒に感じます。ちょっと便利な関数を導入することにします。
+私達の座標系では常に盤面のサイズを100×100に固定しておいて、実際に描画メソッドを呼び出す前に座標系を変換してあげる関数を作成します。
+これらの関数は副作用がないのでテストを書いてみましょう。
+```typescript
+export function convert_vec(x: number, y: number, canvas: HTMLCanvasElement): [number, number] {
+  ...
+}
+
+export function convert_scal(a: number, canvas: HTMLCanvasElement): number {
+  ...
+}
+```
+
+`src/drawer.test.ts`
+```typescript
+test('convert_vec', () => {
+  document.body.innerHTML = '<canvas id="canvas"></canvas>';
+  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  canvas.height = 800;
+  canvas.width = 800;
+
+  let [orig_x, orig_y] = [0, 0];
+  let [new_x, new_y] = convert_vec(orig_x, orig_y, canvas);
+  expect(new_x).toBe(0);
+  expect(new_y).toBe(0);
+  ...
+});
+```
+
+これらの関数を用いて`draw_grid`関数を書き直しておきましょう。
+
+続けて駒の描画を実装していきます。
+まずは一つのコマを置く関数から始めましょう。引数の`i, j`は座標ではなくi行j列を表現していることに注意してください。
+```typescript
+export function draw_piece(i: number, j: number, canvas: HTMLCanvasElement): void {
+  ...
+};
+```
+
+この関数を用いて全ての駒を描画する関数も作ります。`draw_pieces`は`Board`を引数にとって全ての駒を表示する関数です。
+
+最後に、ここまで定義してきた関数を組み合わせて盤面を表示する関数`draw_board`を作成します。
+処理の初めに前回の描画を消去する`context.clearRect(x, y, w, h)`メソッドを呼ぶようにしておいてください。
+
+`src/index.ts`から`draw_board`を呼んで盤面を表示しましょう。
 
 ### ゲームループ
 
