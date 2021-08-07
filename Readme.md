@@ -518,7 +518,7 @@ $ npx ts-node src/main.ts
 ```
 
 ### 盤面の表示
-`src/othello.ts`というファイルを作成しましょう。これ以降オセロのコア機能部分はこのファイルに記述することにします。こうすることで、コードの再利用性が高まります。これ以降も適宜ファイルを分けながら開発していきましょう。
+`src/othello.ts`というファイルを作成しましょう。これ以降オセロのシステムはこのファイルに記述することにします。こうすることで、コードの再利用性が高まります。これ以降も適宜ファイルを分けながら開発していきましょう。
 
 まずはオセロの盤面を表現する型`Board`を定義します。
 どのような構造体でも構いません。以下は一つの例です。
@@ -1048,16 +1048,16 @@ game.message_holder.innerText = "メッセージ";
 
 #### 開始前ページ
 現状ではページを開くと勝手に対局が始まってしまいます。これでは少しぶっきらぼうな感じがしますね。
-'Game'構造体に新たなフラグを導入して、ゲームが進行中かどうかを管理できるようにしてみましょう。
+`Game`構造体に新たなフラグを導入して、ゲームが進行中かどうかを管理できるようにしてみましょう。
 
 `create_game`内で以下の処理を行います。
 1. 開始前のメッセージを表示する。例: 'ゲームを開始するのに"開始"ボタンを押してください'
 2. "開始"ボタンを表示する
-3. "開始"ボタンのイベントリスナー登録する
+3. "開始"ボタンのイベントリスナーを登録する。イベントリスナーの処理は以下の通り
     1. 進行中フラグをオンにする
     2. ボタンを表示にする
 
-`update_game`ではゲーム進行フラグがオン出ないときには状態の更新を行わないようにしておきます。
+`update_game`ではゲーム進行フラグがオンでないときには状態の更新を行わないようにしておきます。
 
 ボタンの表示・非表示を切り替えるには以下のようにするとよいです。
 ```html
@@ -1066,8 +1066,8 @@ game.message_holder.innerText = "メッセージ";
 
 ```typescript
 const start_button = document.getElementById('start_button') as HTMLButtonElement;
-start_button.style.visibility = 'hidden';   // 非表示
-start_button.style.visibility = 'visible';  // 表示
+start_button.style.display = 'none';   // 非表示
+start_button.style.display = 'inline';  // 表示
 ```
 
 余裕があれば、"開始"ボタンの代わりに先手・後手を選べるようにしてみてください。
@@ -1088,8 +1088,221 @@ canvasのサイズは固定になっていますが、さまざまなデバイ�
 `Game`構造体で`board`フィールドの代わりに`board_history`のように盤面の履歴を持っておくことで実現できます。
 
 ## AIをつくる
+今のところランダムな合法手を打つAIと対局できる退屈なオセロゲームですが、この章ではもう少しやりごたえのあるゲームにするため、より賢いAIを作成していきます。
+とはいえもうしばらくランダムなAIにお付き合いください。まずはリファクタリングから始めましょう。
 
-### ランダムなAI
+### AIのインターフェース
+ボードゲームのAIというのは単純化すると盤面を入力として受け取って次の手を出力する関数のようなものです。
+この節では私達の作ったゲームにおいてAIが持つべきインターフェースを定義してしまいます。これによって、ランダムな手を打つAIでもより賢いAIでも、このインターフェースを持つ限りは簡単に入れ替えることができるようになります。
+
+`src/ai.ts`ファイルを作成します。AIが与えられた`Board`に対して変更を加えないように`Readonly`とされていることに注意してください。
+```typescript
+export type AIAgent = {
+  next_move(board: Readonly<Board>): [number, number]
+};
+```
+
+このインターフェースにマッチするようにランダムプレイヤーを作成してみましょう。
+```typescript
+export function new_random_player(): AIAgent {
+  return {
+    next_move: (board: Readonly<Board>) => {
+      // ここをランダムプレーヤーにする
+      return [0, 0];
+    }
+  };
+};
+```
+
+この`new_random_player`を使うようにオセロゲームを書き換えてください。
+`Game`構造体を以下のように変更して、開始処理と共にこれを初期化し、`update_state`関数内で'user'かどうかによって条件分岐をするのがよいかと思います。
+```typescript
+export type Game = {
+  last: number;
+  interval: number;  // (interval)ms 毎に盤面の更新を行う
+  board: Board;
+  canvas: HTMLCanvasElement;
+  user_input: [number, number] | null;
+  message_holder: HTMLSpanElement;
+  black_player: AIAgent | 'user';
+  white_player: AIAgent | 'user';
+};
+```
+
+リファクタリングを完了して、今までと同様に動作することを確認してください。
+
+### ディープコピー
+まずはこの先開発で頻繁に使うことになる`deep_copy`を実装します。どのような振る舞いをするのか説明するために、テストを書いてみます。
+```typescript
+test("deep_copy_board_array", () => {
+  let board = generate_initial_board();
+  const copied_board_black = deep_copy_board_array(board.black);
+  board = put_stone([0,0], true, board)
+  expect(!board.black[0][0]).toBe(copied_board_black[0][0])
+});
+
+test("deep_copy_board", () => {
+  let board = generate_initial_board();
+  const copied_board = deep_copy_board(board);
+  board = put_stone([0,0], true, board)
+  board = move_turn(board);
+  expect(!board.black_turn).toBe(copied_board.black_turn)
+  expect(!board.black[0][0]).toBe(copied_board.black[0][0])
+});
+```
+
+`deep_copy`ではコピー元の値を変更したときにコピー先は変更されません。盤面を探索するAIを作るときには重要な機能です。
+以下のような実装ではテストをパスすることができません。そもそもタイプエラーで実行すらできないので、一時的に`Readonly`を外して実行します。変数名は`copied`となっていますが、実際には全く同一のオブジェクトを参照しています。そのためコピー元に対するあらゆる変更はコピー先に影響します。逆もまた然りです。
+```typescript
+export function deep_copy_board_array(board_array: Readonly<BoardArray>): BoardArray {
+  const copied = board_array;
+  return copied;
+}
+
+export function deep_copy_board(board: Readonly<Board>): Board {
+  const copied = board;
+  return copied;
+}
+```
+
+```
+ FAIL  src/othello.test.ts (5.115 s)
+  ● deep_copy_board_array
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      105 |   const copied_board_black = deep_copy_board_array(board.black);
+      106 |   board = put_stone([0,0], true, board)
+    > 107 |   expect(!board.black[0][0]).toBe(copied_board_black[0][0])
+          |                              ^
+      108 | });
+      109 |
+      110 | test("deep_copy_board", () => {
+
+      at Object.<anonymous> (src/othello.test.ts:107:30)
+
+  ● deep_copy_board
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      113 |   board = put_stone([0,0], true, board)
+      114 |   board = move_turn(board);
+    > 115 |   expect(!board.black_turn).toBe(copied_board.black_turn)
+          |                             ^
+      116 |   expect(!board.black[0][0]).toBe(copied_board.black[0][0])
+      117 | });
+
+      at Object.<anonymous> (src/othello.test.ts:115:29)
+```
+
+次にオブジェクトや配列のコピーとしてよく紹介されている`Object.asign()`やスプレッド構文はどうでしょう？
+先ほどと違って`deep_copy_board`の一つ目のケースは通っていることに注目してください。これらのコピーは"浅いコピー"と呼ばれていて、オブジェクトや配列の1階層目については想定通りのコピーをしてくれます。一方入れ子になっているオブジェクトや配列に関しては、同じ参照を持つことになるので注意が必要です。
+```typescript
+export function deep_copy_board_array(board_array: Readonly<BoardArray>): BoardArray {
+  const copied = [...board_array] as BoardArray; // Object.asign([], board_array) as BoardArray;
+  return copied;
+}
+
+export function deep_copy_board(board: Readonly<Board>): Board {
+  const copied = {...board};  // Object.asign({}, board);
+  return copied;
+}
+```
+```
+ FAIL  src/othello.test.ts
+  ● deep_copy_board_array
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      105 |   const copied_board_black = deep_copy_board_array(board.black);
+      106 |   board = put_stone([0,0], true, board)
+    > 107 |   expect(!board.black[0][0]).toBe(copied_board_black[0][0])
+          |                              ^
+      108 | });
+      109 |
+      110 | test("deep_copy_board", () => {
+
+      at Object.<anonymous> (src/othello.test.ts:107:30)
+
+  ● deep_copy_board
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      114 |   board = move_turn(board);
+      115 |   expect(!board.black_turn).toBe(copied_board.black_turn)
+    > 116 |   expect(!board.black[0][0]).toBe(copied_board.black[0][0])
+          |                              ^
+      117 | });
+
+      at Object.<anonymous> (src/othello.test.ts:116:30)
+```
+
+"深いコピー"を実現する方法はいくつかあって、`lodash`というパッケージを使ったり、一度JSON文字列に変換するといった方法が一般的のようですが、今回は深さが決まっているので自分で簡単に実装してみましょう。以下のようになります。テストが通ることを確認してください。
+```typescript
+export function deep_copy_board_array(board_array: Readonly<BoardArray>): BoardArray {
+  return board_array.map(r=>[...r]) as BoardArray;
+}
+
+export function deep_copy_board(board: Readonly<Board>): Board {
+  return {
+    ...board,
+    black: deep_copy_board_array(board.black),
+    white: deep_copy_board_array(board.white),
+  }
+}
+```
+
+### 弱いAI
+この節では本格的にAIを作る前にほんの少しだけ賢いAIを作っていきます。このAIはとても弱いと思いますが、ボードゲームにおけるAIの仕組みを理解する上で役に立つはずです。
+
+このAIの戦略はこうです。自分の手番が来たら現在の盤面の全ての合法手を打ってみます。その結果自分の駒が一番多くなるような手を選んで打ちます。これだけです。
+
+それでは実装していきましょう。このAIを`weak_agent`と名付けました。`src/weak_agent.ts`ファイルに実装していきます。
+```typescript
+import { AIAgent } from "./ai";
+import { Board } from "./othello";
+
+export function new_weak_agent(): AIAgent {
+  return {
+    next_move: weak_agent_move
+  };
+};
+
+function weak_agent_move(board: Readonly<Board>): [number, number] {
+  // 全ての合法種を列挙する
+
+  // for 一つの合法手 of 全ての合法手
+    // 盤面をコピーする
+    // 盤面を進める
+    // 盤面を評価する
+
+  // 最も自分の駒が多かった合法手を返す
+}
+```
+
+弱いAIが実装できたら、ランダムAIと差し替えて遊んでみましょう。先ほどのリファクタリングのおかげで簡単に差し替えることができたはずです。
+
+さて、このAIのアルゴリズムは2つの部分からなっています。
+1つ目は現在の盤面から手を読んで将来の盤面を生成する"探索"部分。2つ目は生成された盤面の良さを測る"盤面評価"部分です。
+
+ほとんどのボードゲームAIはこの二つの部分から成り立っています。
+
+今回の"探索"は盤面を一手しか進めませんでしたが、より深く何手も探索することもできますし、選択的にある局面を深く探索するといった工夫も考えられます。
+"盤面評価"部分は今回のようにオセロの知識を使った人手による設計以外にも、機械学習を用いたものも一般的です。
+
+以降ではこの二つの機能に関して解説します。
 
 ### 盤面評価
 
