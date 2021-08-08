@@ -13,6 +13,8 @@ import {
   judge_flip_1d,
   DIRECTIONS,
   all_valid_moves,
+  flipable_all_places,
+  next_state,
 } from './othello';
 
 const main = () => {
@@ -40,11 +42,8 @@ const main = () => {
   reader.on('line', function (line) {
     console.log('あなたが入力したのは"' + line + '"です');
     console.log('');
-    const put_place = parse_coord(line);
-    if (
-      is_valid_move(put_place, board) &&
-      put_stone(put_place, board.black_turn, board)
-    ) {
+    const put_place: [number, number] = parse_coord(line);
+    if (next_state(board, put_place)[1]) {
       turn = move_turn(board).black_turn;
       console.log(stringify_board(board));
       if (turn) {

@@ -252,36 +252,39 @@ export function judge_flip_1d(
   p: readonly [number, number],
   q: readonly [number, number],
   board: Board
-): boolean {
+): [number, number][] {
+  let flipable_stones = [];
   let new_p: [number, number] = add_vec(p, q);
   if (board.black_turn) {
     let w_row = board.white[new_p[0]];
     if (w_row == undefined || !w_row[new_p[1]]) {
-      return false;
+      return [];
     }
     while (w_row != undefined && w_row[new_p[1]]) {
+      flipable_stones.push(new_p);
       new_p = add_vec(new_p, q);
       w_row = board.white[new_p[0]];
     }
     let b_row = board.black[new_p[0]];
     if (b_row != undefined && b_row[new_p[1]]) {
-      return true;
+      return flipable_stones;
     }
-    return false;
+    return [];
   } else {
     let b_row = board.black[new_p[0]];
     if (b_row == undefined || !b_row[new_p[1]]) {
-      return false;
+      return [];
     }
     while (b_row != undefined && b_row[new_p[1]]) {
+      flipable_stones.push(new_p);
       new_p = add_vec(new_p, q);
       b_row = board.black[new_p[0]];
     }
     let w_row = board.white[new_p[0]];
     if (w_row != undefined && w_row[new_p[1]]) {
-      return true;
+      return flipable_stones;
     }
-    return false;
+    return [];
   }
 }
 
@@ -296,7 +299,7 @@ export function is_valid_move(p: [number, number], board: Board): boolean {
     return false;
   }
   for (const property in DIRECTIONS) {
-    if (judge_flip_1d(p, Reflect.get(DIRECTIONS, property), board)) {
+    if (judge_flip_1d(p, Reflect.get(DIRECTIONS, property), board).length > 0) {
       judge_number++;
     }
   }
@@ -319,7 +322,7 @@ export function all_valid_moves(board: Board): [number, number][] {
   return can_put_place;
 }
 
-//その時の盤面を表示※ただしおける場所を-で表示
+//その時の盤面を表示 ※ただしおける場所を-で表示
 export function stringify_board(board: Board): string {
   let can_put_place: [number, number][] = all_valid_moves(board);
   let Hyouji = `   a b c d e f g h
@@ -346,4 +349,32 @@ export function stringify_board(board: Board): string {
   });
   Hyouji = Hyouji + '   - - - - - - - -' + '\n';
   return Hyouji;
+}
+
+//ひっくり返せるところをすべてリスト化する
+export function flipable_all_places(
+  p: [number, number],
+  board: Board
+): [number, number][] {
+  let can_flip_places: [number, number][] = [];
+  for (const property in DIRECTIONS) {
+    const q: [number, number] = Reflect.get(DIRECTIONS, property);
+    can_flip_places = can_flip_places.concat(judge_flip_1d(p, q, board));
+  }
+  return can_flip_places;
+}
+
+//現在の盤面と次の着手が与えられて次の盤面を返す
+export function next_state(
+  board: Board,
+  p: [number, number]
+): [Board, boolean] {
+  if (is_valid_move(p, board) && put_stone(p, board.black_turn, board)) {
+    const can_flip_places = flipable_all_places(p, board);
+    for (const elements of can_flip_places) {
+      flip_stone(elements, board);
+    }
+    return [board, true];
+  }
+  return [board, false];
 }

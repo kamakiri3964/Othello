@@ -12,6 +12,8 @@ import {
   judge_flip_1d,
   DIRECTIONS,
   all_valid_moves,
+  flipable_all_places,
+  next_state,
 } from './othello';
 
 test('generate_initial_board', () => {
@@ -101,6 +103,7 @@ test('flip_stone', () => {
   expect(board.white[4][3]).toBe(true);
   expect(result).toBe(true);
   result = flip_stone([2, 3], board);
+  expect(board.black[2][3]).toBe(false);
   expect(result).toBe(false);
 });
 
@@ -160,23 +163,23 @@ test('add_vec', () => {
 test('judge_flip_1d', () => {
   const board = generate_initial_board();
   let result = judge_flip_1d([2, 3], DIRECTIONS.down, board);
-  expect(result).toBe(true);
+  expect(result).toEqual([[3, 3]]);
   result = judge_flip_1d([2, 3], DIRECTIONS.up, board);
-  expect(result).toBe(false);
+  expect(result).toEqual([]);
   result = judge_flip_1d([2, 3], DIRECTIONS.dl, board);
-  expect(result).toBe(false);
+  expect(result).toEqual([]);
   result = judge_flip_1d([4, 5], DIRECTIONS.left, board);
-  expect(result).toBe(true);
+  expect(result).toEqual([[4, 4]]);
   result = judge_flip_1d([4, 5], DIRECTIONS.right, board);
-  expect(result).toBe(false);
+  expect(result).toEqual([]);
   result = judge_flip_1d([1, 3], DIRECTIONS.down, board);
-  expect(result).toBe(false);
+  expect(result).toEqual([]);
   result = judge_flip_1d([2, 4], DIRECTIONS.down, board);
-  expect(result).toBe(false);
+  expect(result).toEqual([]);
   result = judge_flip_1d([3, 3], DIRECTIONS.down, board);
-  expect(result).toBe(false);
+  expect(result).toEqual([]);
   result = judge_flip_1d([0, 0], DIRECTIONS.up, board);
-  expect(result).toBe(false);
+  expect(result).toEqual([]);
 });
 
 test('is_valid_move', () => {
@@ -202,4 +205,22 @@ test('all_valid_moves', () => {
       [5, 4],
     ])
   );
+});
+
+test('flipable_all_places', () => {
+  const board = generate_initial_board();
+  let result = flipable_all_places([2, 3], board);
+  expect(result).toEqual([[3, 3]]);
+  result = flipable_all_places([5, 4], board);
+  expect(result).toEqual([[4, 4]]);
+});
+
+test('next_state', () => {
+  const board = generate_initial_board();
+  let result = next_state(board, [2, 3]);
+  expect(result[0].black[3][3]).toBe(true);
+  expect(result[0].white[3][3]).toBe(false);
+  expect(result[0].black[2][3]).toBe(true);
+  expect(result[0].black[4][4]).toBe(false);
+  expect(result[0].white[4][4]).toBe(true);
 });
