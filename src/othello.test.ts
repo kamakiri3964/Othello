@@ -11,6 +11,7 @@ import {
   add_vec,
   judge_flip_1d,
   DIRECTIONS,
+  all_valid_moves,
 } from './othello';
 
 test('generate_initial_board', () => {
@@ -36,10 +37,10 @@ test('stringify_board', () => {
    - - - - - - - -
 1 | | | | | | | | |
 2 | | | | | | | | |
-3 | | | | | | | | |
-4 | | | |o|x| | | |
-5 | | | |x|o| | | |
-6 | | | | | | | | |
+3 | | | |-| | | | |
+4 | | |-|o|x| | | |
+5 | | | |x|o|-| | |
+6 | | | | |-| | | |
 7 | | | | | | | | |
 8 | | | | | | | | |
    - - - - - - - -
@@ -188,4 +189,17 @@ test('is_valid_move', () => {
   expect(result).toBe(false);
   result = is_valid_move([3, 3], board);
   expect(result).toBe(false);
+});
+
+test('all_valid_moves', () => {
+  const board = generate_initial_board();
+  let result = all_valid_moves(board);
+  expect(result).toEqual(
+    expect.arrayContaining([
+      [2, 3],
+      [3, 2],
+      [4, 5],
+      [5, 4],
+    ])
+  );
 });

@@ -44,6 +44,7 @@ export function generate_initial_board(): Board {
   return board;
 }
 
+/*
 //その時の盤面を表示
 export function stringify_board(board: Board): string {
   let Hyouji = `   a b c d e f g h
@@ -66,6 +67,7 @@ export function stringify_board(board: Board): string {
   Hyouji = Hyouji + '   - - - - - - - -' + '\n';
   return Hyouji;
 }
+*/
 
 // [黒の石数, 白の石数]を返す
 export function calc_score(board: Board): [number, number] {
@@ -287,6 +289,12 @@ export function judge_flip_1d(
 export function is_valid_move(p: [number, number], board: Board): boolean {
   let judge_number = 0;
 
+  const w_row = board.white[p[0]];
+  const b_row = board.black[p[0]];
+
+  if (b_row == undefined || b_row[p[1]] || w_row == undefined || w_row[p[1]]) {
+    return false;
+  }
   for (const property in DIRECTIONS) {
     if (judge_flip_1d(p, Reflect.get(DIRECTIONS, property), board)) {
       judge_number++;
@@ -296,4 +304,46 @@ export function is_valid_move(p: [number, number], board: Board): boolean {
     return true;
   }
   return false;
+}
+
+//合法手を全表示する
+export function all_valid_moves(board: Board): [number, number][] {
+  const can_put_place: [number, number][] = [];
+  for (let i = 0; i < 9; i++) {
+    for (let j = 0; j < 9; j++) {
+      if (is_valid_move([i, j], board)) {
+        can_put_place.push([i, j]);
+      }
+    }
+  }
+  return can_put_place;
+}
+
+//その時の盤面を表示※ただしおける場所を-で表示
+export function stringify_board(board: Board): string {
+  let can_put_place: [number, number][] = all_valid_moves(board);
+  let Hyouji = `   a b c d e f g h
+   - - - - - - - -
+`;
+  board.black.forEach((r, i) => {
+    Hyouji = Hyouji + String(i + 1) + ' |';
+    r.forEach((b, j) => {
+      let c = ' ';
+      if (board.white[i]![j]) {
+        c = 'o';
+      }
+      if (b) {
+        c = 'x';
+      }
+      for (const element of can_put_place) {
+        if (element[0] === i && element[1] === j) {
+          c = '-';
+        }
+      }
+      Hyouji = Hyouji + c + '|';
+    });
+    Hyouji = Hyouji + '\n';
+  });
+  Hyouji = Hyouji + '   - - - - - - - -' + '\n';
+  return Hyouji;
 }

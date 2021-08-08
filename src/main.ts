@@ -12,6 +12,7 @@ import {
   add_vec,
   judge_flip_1d,
   DIRECTIONS,
+  all_valid_moves,
 } from './othello';
 
 const main = () => {
@@ -52,7 +53,9 @@ const main = () => {
         console.log('白(o)の手番です。座標を入力してください。');
       }
     } else {
-      console.log('そこには置くことができません。');
+      console.log(
+        'そこには置くことができません。[ - ]で表示されているところをしてください。'
+      );
       if (turn) {
         console.log('黒(x)の手番です。座標を再度入力してください。');
       } else {
