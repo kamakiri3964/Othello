@@ -222,3 +222,78 @@ export function parse_coord(coord_str: string): [number, number] {
 
   return [-1, -1];
 }
+
+//[number, number]分だけ[number, number]から移動する
+export function add_vec(
+  p: readonly [number, number],
+  q: readonly [number, number]
+): [number, number] {
+  const new_p: [number, number] = [0, 0];
+  new_p[0] = p[0] + q[0];
+  new_p[1] = p[1] + q[1];
+  return new_p;
+}
+
+export const DIRECTIONS = {
+  up: [-1, 0],
+  down: [1, 0],
+  left: [0, -1],
+  right: [0, 1],
+  ul: [-1, -1],
+  ur: [-1, 1],
+  dl: [1, -1],
+  dr: [1, 1],
+} as const;
+
+//一定方向にひっくり返せる石があるか判断する
+export function judge_flip_1d(
+  p: readonly [number, number],
+  q: readonly [number, number],
+  board: Board
+): boolean {
+  let new_p: [number, number] = add_vec(p, q);
+  if (board.black_turn) {
+    let w_row = board.white[new_p[0]];
+    if (w_row == undefined || !w_row[new_p[1]]) {
+      return false;
+    }
+    while (w_row != undefined && w_row[new_p[1]]) {
+      new_p = add_vec(new_p, q);
+      w_row = board.white[new_p[0]];
+    }
+    let b_row = board.black[new_p[0]];
+    if (b_row != undefined && b_row[new_p[1]]) {
+      return true;
+    }
+    return false;
+  } else {
+    let b_row = board.black[new_p[0]];
+    if (b_row == undefined || !b_row[new_p[1]]) {
+      return false;
+    }
+    while (b_row != undefined && b_row[new_p[1]]) {
+      new_p = add_vec(new_p, q);
+      b_row = board.black[new_p[0]];
+    }
+    let w_row = board.white[new_p[0]];
+    if (w_row != undefined && w_row[new_p[1]]) {
+      return true;
+    }
+    return false;
+  }
+}
+
+//[number, number]を受け取って合法かを判断する
+export function is_valid_move(p: [number, number], board: Board): boolean {
+  let judge_number = 0;
+
+  for (const property in DIRECTIONS) {
+    if (judge_flip_1d(p, Reflect.get(DIRECTIONS, property), board)) {
+      judge_number++;
+    }
+  }
+  if (judge_number > 0) {
+    return true;
+  }
+  return false;
+}

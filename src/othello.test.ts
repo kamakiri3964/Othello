@@ -7,6 +7,10 @@ import {
   flip_stone,
   move_turn,
   parse_coord,
+  is_valid_move,
+  add_vec,
+  judge_flip_1d,
+  DIRECTIONS,
 } from './othello';
 
 test('generate_initial_board', () => {
@@ -135,4 +139,53 @@ test('parse_coord', () => {
   result = parse_coord('☺');
   expect(result[0]).toBe(-1);
   expect(result[1]).toBe(-1);
+});
+
+test('add_vec', () => {
+  let result = add_vec([0, 0], [1, 1]);
+  expect(result[0]).toBe(1);
+  expect(result[1]).toBe(1);
+  result = add_vec([0, 0], [1, -3]);
+  expect(result[0]).toBe(1);
+  expect(result[1]).toBe(-3);
+  result = add_vec([0, 0], [-1, -3]);
+  expect(result[0]).toBe(-1);
+  expect(result[1]).toBe(-3);
+  result = add_vec([0, 0], [0, 0]);
+  expect(result[0]).toBe(0);
+  expect(result[1]).toBe(0);
+});
+
+test('judge_flip_1d', () => {
+  const board = generate_initial_board();
+  let result = judge_flip_1d([2, 3], DIRECTIONS.down, board);
+  expect(result).toBe(true);
+  result = judge_flip_1d([2, 3], DIRECTIONS.up, board);
+  expect(result).toBe(false);
+  result = judge_flip_1d([2, 3], DIRECTIONS.dl, board);
+  expect(result).toBe(false);
+  result = judge_flip_1d([4, 5], DIRECTIONS.left, board);
+  expect(result).toBe(true);
+  result = judge_flip_1d([4, 5], DIRECTIONS.right, board);
+  expect(result).toBe(false);
+  result = judge_flip_1d([1, 3], DIRECTIONS.down, board);
+  expect(result).toBe(false);
+  result = judge_flip_1d([2, 4], DIRECTIONS.down, board);
+  expect(result).toBe(false);
+  result = judge_flip_1d([3, 3], DIRECTIONS.down, board);
+  expect(result).toBe(false);
+  result = judge_flip_1d([0, 0], DIRECTIONS.up, board);
+  expect(result).toBe(false);
+});
+
+test('is_valid_move', () => {
+  const board = generate_initial_board();
+  let result = is_valid_move([2, 3], board);
+  expect(result).toBe(true);
+  result = is_valid_move([4, 5], board);
+  expect(result).toBe(true);
+  result = is_valid_move([1, 3], board);
+  expect(result).toBe(false);
+  result = is_valid_move([3, 3], board);
+  expect(result).toBe(false);
 });

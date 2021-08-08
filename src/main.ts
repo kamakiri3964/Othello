@@ -8,6 +8,10 @@ import {
   flip_stone,
   move_turn,
   parse_coord,
+  is_valid_move,
+  add_vec,
+  judge_flip_1d,
+  DIRECTIONS,
 } from './othello';
 
 const main = () => {
@@ -36,7 +40,10 @@ const main = () => {
     console.log('あなたが入力したのは"' + line + '"です');
     console.log('');
     const put_place = parse_coord(line);
-    if (put_stone(put_place, board.black_turn, board)) {
+    if (
+      is_valid_move(put_place, board) &&
+      put_stone(put_place, board.black_turn, board)
+    ) {
       turn = move_turn(board).black_turn;
       console.log(stringify_board(board));
       if (turn) {
