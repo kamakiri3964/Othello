@@ -518,16 +518,29 @@ $ npx ts-node src/main.ts
 ```
 
 ### 盤面の表示
-`src/othello.ts`というファイルを作成しましょう。これ以降オセロのコア機能部分はこのファイルに記述することにします。こうすることで、コードの再利用性が高まります。これ以降も適宜ファイルを分けながら開発していきましょう。
+`src/othello.ts`というファイルを作成しましょう。これ以降オセロのシステムはこのファイルに記述することにします。こうすることで、コードの再利用性が高まります。これ以降も適宜ファイルを分けながら開発していきましょう。
 
 まずはオセロの盤面を表現する型`Board`を定義します。
 どのような構造体でも構いません。以下は一つの例です。
 ```
+export type Row = [
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean,
+  boolean
+];
+
+export type BoardArray = [Row, Row, Row, Row, Row, Row, Row, Row];
+
 export type Board = {
-  black: boolean[][];
-  white: boolean[][];
+  black: BoardArray;
+  white: BoardArray;
   black_turn: boolean;
-}
+};
 ```
 
 初期盤面を生成する関数を作成します。以下のような関数を実装していきます。
@@ -543,13 +556,13 @@ import { Board, generate_initial_board } from './othello';
 
 test('generate_initial_board', () => {
   const board = generate_initial_board();
-  expect(len(board.black)).toBe(8);
-  expect(len(board.black[0])).toBe(8);
+  expect(board.black.length).toBe(8);
+  expect(board.black[0].length).toBe(8);
   expect(board.black[0][0]).toBe(false);
   expect(board.black[4][3]).toBe(true);
   expect(board.black[3][3]).toBe(false);
-  expect(len(board.white)).toBe(8);
-  expect(len(board.white[0])).toBe(8);
+  expect(board.white.length).toBe(8);
+  expect(board.white[0].length).toBe(8);
   expect(board.white[0][0]).toBe(false);
   expect(board.white[4][3]).toBe(false);
   expect(board.white[3][3]).toBe(true);
@@ -680,7 +693,7 @@ const new_p = add_vec(p, DIRECTIONS.up);
 
 ### 合法手を表示する
 もう少し我々のゲームを洗練させるために、せっかくなので着手可能位置のヒントを表示してあげることにしましょう。
-この機能を実現するためにはすべての合法手を列挙する必要があります。この機能をもつ関数を作成しましょう。
+この機能を実現するためにはすべての合法手を列挙する必要があります。この機能をもつ関数`all_valid_state`を作成しましょう。
 
 前節で実装した`is_valid_move`をうまく使うと簡単に実装できると思います。
 
@@ -707,11 +720,589 @@ CUIオセロゲームの最後の節です。
 - ゲーム終了時に勝敗に関するメッセージを出力する
 
 ## ブラウザで遊べるオセロを作る
+webpackの節では`dist/index.html`と`src/index.ts`を編集しました。
+`dist`ディレクトリは自動生成したファイルだけが入っていてほしいような気がするので、少し設定を変更しましょう。
+
+Webpackのプラグインを追加します。
+```
+npm install --save-dev html-webpack-plugin
+```
+
+`src/index.html`というファイルを作成します。
+```html
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title><%= htmlWebpackPlugin.options.title %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+</body>
+</html>
+```
+
+`webpack.config.js`を編集します。
+```javascript
+const path = require("path");
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
+module.exports = {
+  ...
+  plugins: [
+    new HtmlWebpackPlugin({
+      chunks: ['index'],
+      filename: 'index.html',
+      title: 'Othello',
+      template: 'src/index.html'
+    }),
+  ],
+  ...
+};
+```
 
 ### Canvas
+オセロの盤面をページ上に表示するのにCanvasというHTMLの仕様を使います。Canvasを使用することで線分・長方形・円といった図形や画像を表示することができます。
 
+`src/index.ts`を編集してCanvasを試してみましょう。
+```typescript
+const main = () => {
+  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  canvas.height = 800;
+  canvas.width = 800;
+  const ctx = canvas.getContext('2d');
+
+  if (ctx != undefined) {
+    // 長方形に塗りつぶす 左上(100, 100) 幅: 400, 高さ: 400
+    ctx.fillStyle = 'green';
+    ctx.fillRect(100, 100, 400, 400);
+
+    // 線をひく (100, 0) から (500, 600)
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(100, 0);
+    ctx.lineTo(500, 600);
+    ctx.stroke();
+
+    // 円 中心(200, 300) 半径10
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(200, 300, 10, 0, Math.PI * 2, false);
+    ctx.fill();
+    ctx.stroke();
+  }
+};
+
+main();
+```
+
+実行してブラウザで結果を見てみましょう。
+```
+$ npm run serve
+```
+
+これ以降ブラウザ上で実行するJavaScriptに変換するので`tsconfig.json`を編集します。
+`module`フィールドを以下のように変換してください。
+```json
+    "module": "esnext",
+```
+
+`commonjs`というのはTypeScriptをNode.jsで実行できるように変換する設定で、`esnext`はブラウザ用の設定です。この変更に伴って`src/main.ts`が実行できなくなっているので、引き続き`game-start`タスクが正常に実行できるように`package.json`を編集しておきましょう。
+```json
+  "scripts": {
+    "start-game": "ts-node -O '{\"module\": \"commonjs\"}' src/main.ts",
+```
+
+### 盤面を表示する
+ゲームの盤面を表現するには盤と駒をそれぞれ表示する必要がありそうです。まずは盤を表示する関数から作成していきましょう。
+
+`src/drawer.ts`というファイルを作成して描画関係の処理はここに記述することにします。
+盤を表示する`draw_grid`関数を作成することにします。この関数のように演算の結果が戻り値以外にも影響を与える関数のことを"副作用を持つ"といいます。このような副作用を持つ関数はテストをするのが難しくバグに繋がる可能性が高いので、一般的にはできる限り避けるべきですが避けるのが難しいこともあります。今回のケースでは`CanvasRenderingContext2D`オブジェクトをモックすることでテストを書くこともできますが省略しておきます。興味があれば調べて実装してみてください。
+```typescript
+export function draw_grid(ctx: CanvasRenderingContext2D): void {
+  ...
+}
+```
+
+実装できたら`src/index.ts`からこの関数を呼び出してみます。前の節で書いた`main`関数内の描画処理は削除して構わないです。
+
+今のところ盤面のサイズは800×800で固定していますが、これはユーザーの画面サイズに合わせて変化させた方が良さそうです。
+`draw_grid`関数を`height`, `width`を追加で受け取るように書き換えてみましょう。
+```typescript
+export function draw_grid(ctx: CanvasRenderingContext2D, height: number, width: number): void {
+  ...
+}
+```
+
+今後描画に関するあらゆる関数は`ctx, height, width`のセットを引数にとることが予想できるので、代わりに`canvas: HTMLCanvasElement`を与えるようにした方がよさそうです。
+```typescript
+export function draw_grid(canvas: HTMLCanvasElement): void {
+  ...
+}
+```
+
+とはいえ、いつも`height`, `width`を気にしながらコードを書くのは面倒に感じます。ちょっと便利な関数を導入することにします。
+私達の座標系では常に盤面のサイズを100×100に固定しておいて、実際に描画メソッドを呼び出す前に座標系を変換してあげる関数を作成します。
+これらの関数は副作用がないのでテストを書いてみましょう。
+```typescript
+export function convert_vec(x: number, y: number, canvas: HTMLCanvasElement): [number, number] {
+  ...
+}
+
+export function convert_scal(a: number, canvas: HTMLCanvasElement): number {
+  ...
+}
+```
+
+`src/drawer.test.ts`
+```typescript
+test('convert_vec', () => {
+  document.body.innerHTML = '<canvas id="canvas"></canvas>';
+  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  canvas.height = 800;
+  canvas.width = 800;
+
+  let [orig_x, orig_y] = [0, 0];
+  let [new_x, new_y] = convert_vec(orig_x, orig_y, canvas);
+  expect(new_x).toBe(0);
+  expect(new_y).toBe(0);
+  ...
+});
+```
+
+これらの関数を用いて`draw_grid`関数を書き直しておきましょう。
+
+続けて駒の描画を実装していきます。
+まずは一つのコマを置く関数から始めましょう。引数の`i, j`は座標ではなくi行j列を表現していることに注意してください。
+```typescript
+export function draw_piece(i: number, j: number, canvas: HTMLCanvasElement): void {
+  ...
+};
+```
+
+この関数を用いて全ての駒を描画する関数も作ります。`draw_pieces`は`Board`を引数にとって全ての駒を表示する関数です。
+
+最後に、ここまで定義してきた関数を組み合わせて盤面を表示する関数`draw_board`を作成します。
+処理の初めに前回の描画を消去する`context.clearRect(x, y, w, h)`メソッドを呼ぶようにしておいてください。
+
+`src/index.ts`から`draw_board`を呼んで盤面を表示しましょう。
+
+### ゲームループ
+一般的なコンピュータゲームでは一定の時間間隔ごとにゲームの内部状態や画面描画を更新するようなゲームループの仕組みがあります。CUIのオセロゲームで行ったようにユーザーからの入力があるまで状態の更新を行わないようなゲームループも考えられます。
+今回は一定の時間間隔で更新するゲームループを採用しましょう。
+
+`src/game.ts`ファイルを作成します。
+```typescript
+import { Board, generate_initial_board } from "./othello";
+
+export type Game = {
+  last: number;      // 最後に盤面の更新をした時刻 (ms)
+  interval: number;  // (interval)ms 毎に盤面の更新を行う
+  board: Board;
+  canvas: HTMLCanvasElement;
+};
+
+export function create_game(canvas: HTMLCanvasElement): Game {
+  return {
+    last: performance.now(),
+    interval: 1000, // ms
+    board: generate_initial_board(),
+    canvas: canvas
+  }
+}
+
+function update_game(game: Game): void {
+  console.log(game.last);
+}
+
+export function start_loop(game: Game): void {
+  const run = (now: number) => {
+    let delta = now - game.last;
+    while (delta >= game.interval) {
+      delta -= game.interval;
+      game.last = now - delta;
+      // ここで盤面の更新・描画処理を行う
+      update_game(game);
+    }
+    requestAnimationFrame(run);
+  };
+  requestAnimationFrame(run);
+}
+```
+
+`src/index.ts`
+```typescript
+const main = () => {
+  const game = create_game(canvas);
+  start_loop(game);
+};
+```
+
+どのような動作をするかブラウザで確認してみましょう。`console.log`の出力をブラウザで確認するには、chromeであればページ上で右クリックをして"Inspect"を選択して開発者ツールを表示します。開発者ツールの"Console"タブを開いてください。1秒に一回数値が表示されているのが確認できると思います。
+
+厳密には環境によって異なりますが、基本的にはブラウザの画面更新は1/60秒に一度行われます。`requestAnimationFrame`関数に渡された関数(`run`)は次回の画面更新時に呼び出されることになります。`run`関数の中では再度`requestAnimationFrame(run)`が呼ばれている再帰構造になっているので、基本的には1/60秒毎に`run`関数が呼び出され続けるようになっているわけです。
+
+`run`関数内部では、最後の画面更新時刻`last`と現在時刻`now`を比較して、その差が`interval`よりも大きいときに画面更新を行うようにしています。これによって1秒毎に出力する仕組みです。
+
+この節では、1秒毎にランダムな手でオセロゲームを更新する処理を実装してみましょう。
+前節で実装した`draw_board`関数や前章で実装した`next_state`関数、`all_valid_move`関数を使用するとよいでしょう。
+
+### マウス入力を扱う
+この節ではユーザーからのマウス入力を受けて、駒を置く処理を作っていきましょう。
+ユーザーは黒番固定ですすめていくことにします。
+
+ブラウザでユーザーの入力を扱うときにはイベント駆動と呼ばれるプログラミングモデルが使用されます。
+ページ上のcanvas要素に対するマウスクリックのようなイベントに対してイベントリスナーという関数を登録します。
+プログラマーはこの登録をするだけでブラウザ側がユーザーのクリックを検知して登録したイベントリスナーを呼び出してくれます。
+
+```typescript
+...
+const main = () => {
+  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  canvas.height = 800;
+  canvas.width = 800;
+  ...
+  canvas.addEventListener('click', (e: MouseEvent) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    alert(x + ", " + y);
+  })
+};
+...
+```
+
+canvas上をクリックするたびにアラートウィンドウが表示されることが確認できると思います。
+
+さて、それではこのマウス入力機能を私たちのゲームに導入していきましょう。
+全体の方針は以下のような形になります。
+`Game`構造体に`user_input`のような新たなフィールドを追加します。イベントリスナーではマウスクリックを検知したときに`user_input`にユーザーの入力を保存しておきます。
+次の盤面更新時にユーザーの手番であれば`user_input`の値に応じて盤面を進行させます。
+
+まずは、`Game`に`user_input`フィールドを追加します。このフィールドの型はユーザー入力がある場合は座標でない場合は`null`になります。このような型は`[number, number] | null`のように表現できます。`create_game`関数を同時に更新することを忘れないでください。
+
+イベントリスナーを登録する関数`register_mouse_input_listner`を作成します。
+この中ではイベントリスナーを作成し、それをcanvas要素のイベントリスナーとして追加します。
+イベントリスナーではマウスの座標を読み取り、それを`game`変数の`user_input`フィールドに保存するようにしましょう。
+```typescript
+function register_mouse_input_listner(game: Game): void {
+  ...
+}
+```
+この関数はゲーム初期化時に一度だけ呼ばれれば良いので`create_game`内で呼び出すことにしておきます。
+
+`update_game`関数を編集して、`user_input`に応じて盤面を更新する処理を実装しましょう。ユーザーの入力を処理した後には`user_input`の値を消去しておいて、入力を重複して処理することを防いでください。
+canvas上の座標をオセロ盤面の行数・列数に変換する関数があると便利そうです。この関数は描画処理を担当する`src/drawer.ts`ファイルに記述するのがよいと思います。
+`update_game`関数の中身は"盤面の状態を更新"して、更新があれば"盤面を描画する"処理ですから、以下のように整理できそうです。`update_state`関数は盤面を更新して更新があれば`true`を返すようにします。`update_state`関数は描画に関係しないのでテストを書くことも簡単そうです。
+```typescript
+function update_game(game: Game): void {
+  if (update_state(game)) {
+    draw_board(game.board)
+  }
+}
+```
+
+最後に1秒に一回の更新ではプレイ感が非常に悪いので、1/60秒に一度の更新にしておきましょう。
+
+ここまででランダムプレイヤーと対戦するオセロゲームができているはずです。かなり完成が近づいてきました。
+
+### 盤面以外の表示など
+最後にゲームとしての体裁を整えていきましょう。
+
+#### 手番・スコアの表示
+手番やスコアといった盤面以外の情報を表示します。
+`src/index.html'に情報を表示するためのタグを追加します。
+```html
+...
+<body>
+  <canvas id="canvas"></canvas>
+  <div>
+    <span id="message"></span>
+  </div>
+</body>
+...
+```
+
+`Game`構造体に新たなフィールドを追加しましょう。
+```
+export type Game = {
+  last: number;      // 最後に盤面の更新をした時刻 (ms)
+  interval: number;  // (interval)ms 毎に盤面の更新を行う
+  board: Board;
+  canvas: HTMLCanvasElement;
+  user_input: [number, number] | null;
+  message_holder: HTMLSpanElement;
+};
+```
+
+しかるべきタイミングで以下のように`innerText`に値をセットすることでメッセージを出力できます。
+```typescript
+game.message_holder.innerText = "メッセージ";
+```
+
+`create_message(board: Board): string`のような関数を作成すればテストしやすくなるでしょう。
+
+#### 開始前ページ
+現状ではページを開くと勝手に対局が始まってしまいます。これでは少しぶっきらぼうな感じがしますね。
+`Game`構造体に新たなフラグを導入して、ゲームが進行中かどうかを管理できるようにしてみましょう。
+
+`create_game`内で以下の処理を行います。
+1. 開始前のメッセージを表示する。例: 'ゲームを開始するのに"開始"ボタンを押してください'
+2. "開始"ボタンを表示する
+3. "開始"ボタンのイベントリスナーを登録する。イベントリスナーの処理は以下の通り
+    1. 進行中フラグをオンにする
+    2. ボタンを表示にする
+
+`update_game`ではゲーム進行フラグがオンでないときには状態の更新を行わないようにしておきます。
+
+ボタンの表示・非表示を切り替えるには以下のようにするとよいです。
+```html
+<button id="start_button">開始</button>
+```
+
+```typescript
+const start_button = document.getElementById('start_button') as HTMLButtonElement;
+start_button.style.display = 'none';   // 非表示
+start_button.style.display = 'inline';  // 表示
+```
+
+余裕があれば、"開始"ボタンの代わりに先手・後手を選べるようにしてみてください。
+他にも人間同士の対局ができるようにしてもよいですね。
+
+#### 終了時の処理
+盤面更新時に終了の判定をして終了した旨のメッセージを表示するようにしてください。同時に進行中フラグをオフにして開始ボタンを再表示しましょう。
+再度ゲームを開始できるように、開始時のイベントリスナーで盤面の初期化処理が走るようにします。
+
+#### 盤面サイズの自動調整
+canvasのサイズは固定になっていますが、さまざまなデバイスでプレイされることを考えるとウィンドウの幅に合わせて自動調節したほうが良さそうに思われます。
+ブラウザの横幅は`document.body.clientWidth`、高さは`document.body.clientHight`で取得できます。800pxと横幅・高さの中で、最も小さいものを盤面のサイズに採用すれば良さそうです。
+
+`draw_board`関数内でこれらの値をチェックして、`canvas.hight`、`canvas.width`を設定すると、ウィンドウサイズが変わったときにも対応できます。
+
+#### 待った
+これは少し発展的な課題になりますが、もし時間があれば"待った"機能を実装してもよいと思います。
+`Game`構造体で`board`フィールドの代わりに`board_history`のように盤面の履歴を持っておくことで実現できます。
 
 ## AIをつくる
+今のところランダムな合法手を打つAIと対局できる退屈なオセロゲームですが、この章ではもう少しやりごたえのあるゲームにするため、より賢いAIを作成していきます。
+とはいえもうしばらくランダムなAIにお付き合いください。まずはリファクタリングから始めましょう。
+
+### AIのインターフェース
+ボードゲームのAIというのは単純化すると盤面を入力として受け取って次の手を出力する関数のようなものです。
+この節では私達の作ったゲームにおいてAIが持つべきインターフェースを定義してしまいます。これによって、ランダムな手を打つAIでもより賢いAIでも、このインターフェースを持つ限りは簡単に入れ替えることができるようになります。
+
+`src/ai.ts`ファイルを作成します。AIが与えられた`Board`に対して変更を加えないように`Readonly`とされていることに注意してください。
+```typescript
+export type AIAgent = {
+  next_move(board: Readonly<Board>): [number, number]
+};
+```
+
+このインターフェースにマッチするようにランダムプレイヤーを作成してみましょう。
+```typescript
+export function new_random_player(): AIAgent {
+  return {
+    next_move: (board: Readonly<Board>) => {
+      // ここをランダムプレーヤーにする
+      return [0, 0];
+    }
+  };
+};
+```
+
+この`new_random_player`を使うようにオセロゲームを書き換えてください。
+`Game`構造体を以下のように変更して、開始処理と共にこれを初期化し、`update_state`関数内で'user'かどうかによって条件分岐をするのがよいかと思います。
+```typescript
+export type Game = {
+  last: number;
+  interval: number;  // (interval)ms 毎に盤面の更新を行う
+  board: Board;
+  canvas: HTMLCanvasElement;
+  user_input: [number, number] | null;
+  message_holder: HTMLSpanElement;
+  black_player: AIAgent | 'user';
+  white_player: AIAgent | 'user';
+};
+```
+
+リファクタリングを完了して、今までと同様に動作することを確認してください。
+
+### ディープコピー
+まずはこの先開発で頻繁に使うことになる`deep_copy`を実装します。どのような振る舞いをするのか説明するために、テストを書いてみます。
+```typescript
+test("deep_copy_board_array", () => {
+  let board = generate_initial_board();
+  const copied_board_black = deep_copy_board_array(board.black);
+  board = put_stone([0,0], true, board)
+  expect(!board.black[0][0]).toBe(copied_board_black[0][0])
+});
+
+test("deep_copy_board", () => {
+  let board = generate_initial_board();
+  const copied_board = deep_copy_board(board);
+  board = put_stone([0,0], true, board)
+  board = move_turn(board);
+  expect(!board.black_turn).toBe(copied_board.black_turn)
+  expect(!board.black[0][0]).toBe(copied_board.black[0][0])
+});
+```
+
+`deep_copy`ではコピー元の値を変更したときにコピー先は変更されません。盤面を探索するAIを作るときには重要な機能です。
+以下のような実装ではテストをパスすることができません。そもそもタイプエラーで実行すらできないので、一時的に`Readonly`を外して実行します。変数名は`copied`となっていますが、実際には全く同一のオブジェクトを参照しています。そのためコピー元に対するあらゆる変更はコピー先に影響します。逆もまた然りです。
+```typescript
+export function deep_copy_board_array(board_array: Readonly<BoardArray>): BoardArray {
+  const copied = board_array;
+  return copied;
+}
+
+export function deep_copy_board(board: Readonly<Board>): Board {
+  const copied = board;
+  return copied;
+}
+```
+
+```
+ FAIL  src/othello.test.ts (5.115 s)
+  ● deep_copy_board_array
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      105 |   const copied_board_black = deep_copy_board_array(board.black);
+      106 |   board = put_stone([0,0], true, board)
+    > 107 |   expect(!board.black[0][0]).toBe(copied_board_black[0][0])
+          |                              ^
+      108 | });
+      109 |
+      110 | test("deep_copy_board", () => {
+
+      at Object.<anonymous> (src/othello.test.ts:107:30)
+
+  ● deep_copy_board
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      113 |   board = put_stone([0,0], true, board)
+      114 |   board = move_turn(board);
+    > 115 |   expect(!board.black_turn).toBe(copied_board.black_turn)
+          |                             ^
+      116 |   expect(!board.black[0][0]).toBe(copied_board.black[0][0])
+      117 | });
+
+      at Object.<anonymous> (src/othello.test.ts:115:29)
+```
+
+次にオブジェクトや配列のコピーとしてよく紹介されている`Object.asign()`やスプレッド構文はどうでしょう？
+先ほどと違って`deep_copy_board`の一つ目のケースは通っていることに注目してください。これらのコピーは"浅いコピー"と呼ばれていて、オブジェクトや配列の1階層目については想定通りのコピーをしてくれます。一方入れ子になっているオブジェクトや配列に関しては、同じ参照を持つことになるので注意が必要です。
+```typescript
+export function deep_copy_board_array(board_array: Readonly<BoardArray>): BoardArray {
+  const copied = [...board_array] as BoardArray; // Object.asign([], board_array) as BoardArray;
+  return copied;
+}
+
+export function deep_copy_board(board: Readonly<Board>): Board {
+  const copied = {...board};  // Object.asign({}, board);
+  return copied;
+}
+```
+```
+ FAIL  src/othello.test.ts
+  ● deep_copy_board_array
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      105 |   const copied_board_black = deep_copy_board_array(board.black);
+      106 |   board = put_stone([0,0], true, board)
+    > 107 |   expect(!board.black[0][0]).toBe(copied_board_black[0][0])
+          |                              ^
+      108 | });
+      109 |
+      110 | test("deep_copy_board", () => {
+
+      at Object.<anonymous> (src/othello.test.ts:107:30)
+
+  ● deep_copy_board
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      114 |   board = move_turn(board);
+      115 |   expect(!board.black_turn).toBe(copied_board.black_turn)
+    > 116 |   expect(!board.black[0][0]).toBe(copied_board.black[0][0])
+          |                              ^
+      117 | });
+
+      at Object.<anonymous> (src/othello.test.ts:116:30)
+```
+
+"深いコピー"を実現する方法はいくつかあって、`lodash`というパッケージを使ったり、一度JSON文字列に変換するといった方法が一般的のようですが、今回は深さが決まっているので自分で簡単に実装してみましょう。以下のようになります。テストが通ることを確認してください。
+```typescript
+export function deep_copy_board_array(board_array: Readonly<BoardArray>): BoardArray {
+  return board_array.map(r=>[...r]) as BoardArray;
+}
+
+export function deep_copy_board(board: Readonly<Board>): Board {
+  return {
+    ...board,
+    black: deep_copy_board_array(board.black),
+    white: deep_copy_board_array(board.white),
+  }
+}
+```
+
+### 弱いAI
+この節では本格的にAIを作る前にほんの少しだけ賢いAIを作っていきます。このAIはとても弱いと思いますが、ボードゲームにおけるAIの仕組みを理解する上で役に立つはずです。
+
+このAIの戦略はこうです。自分の手番が来たら現在の盤面の全ての合法手を打ってみます。その結果自分の駒が一番多くなるような手を選んで打ちます。これだけです。
+
+それでは実装していきましょう。このAIを`weak_agent`と名付けました。`src/weak_agent.ts`ファイルに実装していきます。
+```typescript
+import { AIAgent } from "./ai";
+import { Board } from "./othello";
+
+export function new_weak_agent(): AIAgent {
+  return {
+    next_move: weak_agent_move
+  };
+};
+
+function weak_agent_move(board: Readonly<Board>): [number, number] {
+  // 全ての合法種を列挙する
+
+  // for 一つの合法手 of 全ての合法手
+    // 盤面をコピーする
+    // 盤面を進める
+    // 盤面を評価する
+
+  // 最も自分の駒が多かった合法手を返す
+}
+```
+
+弱いAIが実装できたら、ランダムAIと差し替えて遊んでみましょう。先ほどのリファクタリングのおかげで簡単に差し替えることができたはずです。
+
+さて、このAIのアルゴリズムは2つの部分からなっています。
+1つ目は現在の盤面から手を読んで将来の盤面を生成する"探索"部分。2つ目は生成された盤面の良さを測る"盤面評価"部分です。
+
+ほとんどのボードゲームAIはこの二つの部分から成り立っています。
+
+今回の"探索"は盤面を一手しか進めませんでしたが、より深く何手も探索することもできますし、選択的にある局面を深く探索するといった工夫も考えられます。
+"盤面評価"部分は今回のようにオセロの知識を使った人手による設計以外にも、機械学習を用いたものも一般的です。
+
+以降ではこの二つの機能に関して解説します。
 
 ### 盤面評価
 
