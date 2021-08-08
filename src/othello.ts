@@ -364,17 +364,37 @@ export function flipable_all_places(
   return can_flip_places;
 }
 
+export enum Gamestatus {
+  Ok,
+  Pass,
+  End,
+  Error,
+}
+
 //現在の盤面と次の着手が与えられて次の盤面を返す
 export function next_state(
   board: Board,
   p: [number, number]
-): [Board, boolean] {
+): [Board, Gamestatus] {
   if (is_valid_move(p, board) && put_stone(p, board.black_turn, board)) {
     const can_flip_places = flipable_all_places(p, board);
     for (const elements of can_flip_places) {
       flip_stone(elements, board);
     }
-    return [board, true];
+    board = move_turn(board);
+
+    if (all_valid_moves(board).length > 0) {
+      return [board, Gamestatus.Ok];
+    }
+
+    if (all_valid_moves(board).length === 0) {
+      board = move_turn(board);
+      if (all_valid_moves(board).length === 0) {
+        return [board, Gamestatus.End];
+      } else {
+        return [board, Gamestatus.Pass];
+      }
+    }
   }
-  return [board, false];
+  return [board, Gamestatus.Error];
 }
