@@ -123,25 +123,31 @@ export function put_stone(
 }
 
 //[行番号, 列番号]を受け取って石をひっくり返す
-export function flip_stone(point: [number, number], board: Board) {
+export function flip_stone(point: [number, number], board: Board): boolean {
   const row_number = point[0];
   const column_number = point[1];
-  if (board.black[row_number]![column_number]) {
-    if (!board.white[row_number]![column_number]) {
+
+  if (
+    row_number >= 0 &&
+    row_number <= 7 &&
+    column_number >= 0 &&
+    column_number <= 7
+  ) {
+    if (
+      board.black[row_number]![column_number] ||
+      board.white[row_number]![column_number]
+    ) {
       board.black[row_number]![column_number] =
         !board.black[row_number]![column_number];
       board.white[row_number]![column_number] =
         !board.white[row_number]![column_number];
+      return true;
+    } else {
+      return false;
     }
-  } else if (!board.black[row_number]![column_number]) {
-    if (board.white[row_number]![column_number]) {
-      board.black[row_number]![column_number] =
-        !board.black[row_number]![column_number];
-      board.white[row_number]![column_number] =
-        !board.white[row_number]![column_number];
-    }
+  } else {
+    return false;
   }
-  return board;
 }
 
 //手番を進める

@@ -84,14 +84,19 @@ test('put_stone', () => {
 test('flip_stone', () => {
   const board = generate_initial_board();
   let result = flip_stone([3, 3], board);
-  expect(result.black[3][3]).toBe(true);
-  expect(result.white[3][3]).toBe(false);
+  expect(board.black[3][3]).toBe(true);
+  expect(board.white[3][3]).toBe(false);
+  expect(result).toBe(true);
   result = flip_stone([4, 4], board);
-  expect(result.black[4][4]).toBe(true);
-  expect(result.white[4][4]).toBe(false);
+  expect(board.black[4][4]).toBe(true);
+  expect(board.white[4][4]).toBe(false);
+  expect(result).toBe(true);
   result = flip_stone([4, 3], board);
-  expect(result.black[4][3]).toBe(false);
-  expect(result.white[4][3]).toBe(true);
+  expect(board.black[4][3]).toBe(false);
+  expect(board.white[4][3]).toBe(true);
+  expect(result).toBe(true);
+  result = flip_stone([2, 3], board);
+  expect(result).toBe(false);
 });
 
 test('move_turn', () => {
