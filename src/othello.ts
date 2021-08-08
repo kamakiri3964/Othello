@@ -95,40 +95,50 @@ export function put_stone(
   black_turn: boolean,
   board: Board
 ) {
-  const raw_number = point[0];
+  const row_number = point[0];
   const column_number = point[1];
-  if (black_turn) {
-    if (!board.black[raw_number]![column_number]) {
-      board.black[raw_number]![column_number] =
-        !board.black[raw_number]![column_number];
+
+  if (
+    row_number >= 0 &&
+    row_number <= 7 &&
+    column_number >= 0 &&
+    column_number <= 7
+  ) {
+    if (
+      !board.black[row_number]![column_number] &&
+      !board.white[row_number]![column_number]
+    ) {
+      if (black_turn) {
+        board.black[row_number]![column_number] = true;
+      } else {
+        board.white[row_number]![column_number] = true;
+      }
+      return true;
+    } else {
+      return false;
     }
+  } else {
+    return false;
   }
-  if (!black_turn) {
-    if (!board.white[raw_number]![column_number]) {
-      board.white[raw_number]![column_number] =
-        !board.white[raw_number]![column_number];
-    }
-  }
-  return board;
 }
 
 //[行番号, 列番号]を受け取って石をひっくり返す
 export function flip_stone(point: [number, number], board: Board) {
-  const raw_number = point[0];
+  const row_number = point[0];
   const column_number = point[1];
-  if (board.black[raw_number]![column_number]) {
-    if (!board.white[raw_number]![column_number]) {
-      board.black[raw_number]![column_number] =
-        !board.black[raw_number]![column_number];
-      board.white[raw_number]![column_number] =
-        !board.white[raw_number]![column_number];
+  if (board.black[row_number]![column_number]) {
+    if (!board.white[row_number]![column_number]) {
+      board.black[row_number]![column_number] =
+        !board.black[row_number]![column_number];
+      board.white[row_number]![column_number] =
+        !board.white[row_number]![column_number];
     }
-  } else if (!board.black[raw_number]![column_number]) {
-    if (board.white[raw_number]![column_number]) {
-      board.black[raw_number]![column_number] =
-        !board.black[raw_number]![column_number];
-      board.white[raw_number]![column_number] =
-        !board.white[raw_number]![column_number];
+  } else if (!board.black[row_number]![column_number]) {
+    if (board.white[row_number]![column_number]) {
+      board.black[row_number]![column_number] =
+        !board.black[row_number]![column_number];
+      board.white[row_number]![column_number] =
+        !board.white[row_number]![column_number];
     }
   }
   return board;
@@ -142,33 +152,37 @@ export function move_turn(board: Board) {
 
 //"英語小文字+数字"情報を受け取って[number, number]にする
 export function parse_coord(coord_str: string): [number, number] {
-  const raw_str = coord_str.split('')[1];
-  const column_str = coord_str.split('')[0];
-  let [raw_number, column_number] = [-1, -1];
+  if (coord_str.length !== 2) {
+    return [-1, -1];
+  }
 
-  if (raw_str === '1') {
-    raw_number = 0;
+  const row_str = coord_str.split('')[1];
+  const column_str = coord_str.split('')[0];
+  let [row_number, column_number] = [-1, -1];
+
+  if (row_str === '1') {
+    row_number = 0;
   }
-  if (raw_str === '2') {
-    raw_number = 1;
+  if (row_str === '2') {
+    row_number = 1;
   }
-  if (raw_str === '3') {
-    raw_number = 2;
+  if (row_str === '3') {
+    row_number = 2;
   }
-  if (raw_str === '4') {
-    raw_number = 3;
+  if (row_str === '4') {
+    row_number = 3;
   }
-  if (raw_str === '5') {
-    raw_number = 4;
+  if (row_str === '5') {
+    row_number = 4;
   }
-  if (raw_str === '6') {
-    raw_number = 5;
+  if (row_str === '6') {
+    row_number = 5;
   }
-  if (raw_str === '7') {
-    raw_number = 6;
+  if (row_str === '7') {
+    row_number = 6;
   }
-  if (raw_str === '8') {
-    raw_number = 7;
+  if (row_str === '8') {
+    row_number = 7;
   }
 
   if (column_str === 'a') {
@@ -195,5 +209,10 @@ export function parse_coord(coord_str: string): [number, number] {
   if (column_str === 'h') {
     column_number = 7;
   }
-  return [raw_number, column_number];
+
+  if (row_number != -1 && column_number != -1) {
+    return [row_number, column_number];
+  }
+
+  return [-1, -1];
 }
