@@ -15,11 +15,11 @@ export function draw_grid(canvas: HTMLCanvasElement): void {
   }
 
   if (ctx != undefined) {
-    // 基礎の盤面長方形に塗りつぶす 左上(100, 150) 幅: 600, 高さ: 600
+    // 基礎の盤面長方形に塗りつぶす 左上(短辺1/8, 短辺1/8) 幅: 短辺3/4, 高さ: 短辺3/4
     ctx.fillStyle = 'green';
     ctx.fillRect(short/8, short/8, short*3/4, short*3/4);
 
-    // 縦線をひく (100, 150) から (100, 750)までを右に75ずつ
+    // 縦線をひく (短辺1/8, 短辺1/8) から (短辺1/8, 短辺7/8)までを右に短辺3/32ずつ
     ctx.strokeStyle = 'gray';
     ctx.lineWidth = 2;
     for (let i = 0; i < 9; i++) {
@@ -29,7 +29,7 @@ export function draw_grid(canvas: HTMLCanvasElement): void {
       ctx.stroke();    
     }
 
-    // 横線をひく (100, 150) から (700, 150)までを下に75ずつ
+    // 横線をひく (短辺1/8, 短辺1/8) から (短辺7/8, 短辺1/8)までを下に短辺3/32ずつ
     ctx.strokeStyle = 'gray';
     ctx.lineWidth = 2;
     for (let i = 0; i < 9; i++) {
@@ -39,4 +39,14 @@ export function draw_grid(canvas: HTMLCanvasElement): void {
       ctx.stroke();    
     }
   }
+}
+
+export function convert_vec(x: number, y: number, canvas: HTMLCanvasElement): [number, number] {
+  let hight_mag = canvas.height / 100
+  let width_mag = canvas.width / 100
+  return [x * hight_mag, y * width_mag]
+}
+
+export function convert_scal(a: number, canvas: HTMLCanvasElement): number {
+  return 1
 }
