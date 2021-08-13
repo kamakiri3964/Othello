@@ -14,6 +14,8 @@ import {
   all_valid_moves,
   flipable_all_places,
   next_state,
+  deep_copy_board_array,
+  deep_copy_board,
 } from './othello';
 
 test('generate_initial_board', () => {
@@ -223,4 +225,20 @@ test('next_state', () => {
   expect(result[0].black[2][3]).toBe(true);
   expect(result[0].black[4][4]).toBe(false);
   expect(result[0].white[4][4]).toBe(true);
+});
+
+test('deep_copy_board_array', () => {
+  let board = generate_initial_board();
+  const copied_board_black = deep_copy_board_array(board.black);
+  put_stone([0, 0], true, board);
+  expect(!board.black[0][0]).toBe(copied_board_black[0][0]);
+});
+
+test('deep_copy_board', () => {
+  let board = generate_initial_board();
+  const copied_board = deep_copy_board(board);
+  put_stone([0, 0], true, board);
+  board = move_turn(board);
+  expect(!board.black_turn).toBe(copied_board.black_turn);
+  expect(!board.black[0][0]).toBe(copied_board.black[0][0]);
 });

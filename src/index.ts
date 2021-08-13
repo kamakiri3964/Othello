@@ -1,3 +1,4 @@
+import { new_random_player } from './ai';
 import { draw_board, draw_grid, draw_piece, draw_pieces } from './drawer';
 import { create_game, start_loop } from './game';
 import {

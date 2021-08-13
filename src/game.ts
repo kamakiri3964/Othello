@@ -1,3 +1,5 @@
+import { basename } from 'path/posix';
+import { AIAgent, new_random_player } from './ai';
 import { draw_board, draw_pieces, input_convert_place } from './drawer';
 import {
   Board,
@@ -27,6 +29,8 @@ export type Game = {
   message_holder: HTMLSpanElement;
   start_button: HTMLButtonElement;
   now_gaming: boolean;
+  black_player: AIAgent | 'user';
+  white_player: AIAgent | 'user';
 };
 
 export function register_mouse_input_listner(game: Game): void {
@@ -58,7 +62,7 @@ export function create_game(
   message_holder: HTMLSpanElement,
   start_button: HTMLButtonElement
 ): Game {
-  const game = {
+  const game: Game = {
     last: performance.now(),
     interval: 1000 / 60, // ms
     board: generate_initial_board(),
@@ -67,6 +71,8 @@ export function create_game(
     message_holder: message_holder,
     start_button: start_button,
     now_gaming: false,
+    black_player: 'user',
+    white_player: new_random_player(),
   };
   message_holder.innerText = '「開始」ボタンを押してください';
   game.start_button.style.display = 'inline';
@@ -76,10 +82,30 @@ export function create_game(
 }
 
 function update_state(game: Game): boolean {
+  if (game.board.black_turn) {
+    if (game.black_player === 'user') {
+      return input_state(game);
+    } else {
+      game.user_input = game.black_player.next_move(game.board);
+      return input_state(game);
+    }
+  }
+
+  if (!game.board.black_turn) {
+    if (game.white_player === 'user') {
+      return input_state(game);
+    } else {
+      game.user_input = game.white_player.next_move(game.board);
+      return input_state(game);
+    }
+  }
+  return false;
+}
+
+function input_state(game: Game): boolean {
   if (!game.now_gaming && game.user_input !== null) {
     game.user_input = null;
   }
-
   if (game.now_gaming && game.user_input !== null) {
     const [board, status] = next_state(game.board, game.user_input);
     if (status === Gamestatus.Error) {

@@ -398,3 +398,17 @@ export function next_state(
   }
   return [board, Gamestatus.Error];
 }
+
+export function deep_copy_board_array(
+  board_array: Readonly<BoardArray>
+): BoardArray {
+  return board_array.map((r) => [...r]) as BoardArray;
+}
+
+export function deep_copy_board(board: Readonly<Board>): Board {
+  return {
+    ...board,
+    black: deep_copy_board_array(board.black),
+    white: deep_copy_board_array(board.white),
+  };
+}
