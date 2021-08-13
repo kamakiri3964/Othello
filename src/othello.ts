@@ -18,7 +18,7 @@ export type Board = {
 };
 
 //盤面初期化
-export function generate_initial_board(): Board {  
+export function generate_initial_board(): Board {
   const black = new Array(8);
   for (let i = 0; i < 8; i++) {
     black[i] = new Array(8).fill(false);
@@ -44,6 +44,7 @@ export function generate_initial_board(): Board {
   return board;
 }
 
+/*
 //その時の盤面を表示
 export function stringify_board(board: Board): string {
   let Hyouji = `   a b c d e f g h
@@ -66,6 +67,7 @@ export function stringify_board(board: Board): string {
   Hyouji = Hyouji + '   - - - - - - - -' + '\n';
   return Hyouji;
 }
+*/
 
 // [黒の石数, 白の石数]を返す
 export function calc_score(board: Board): [number, number] {
@@ -90,101 +92,309 @@ export function calc_score(board: Board): [number, number] {
 }
 
 //[行番号, 列番号]、順番を受け取ってその場所に石を置く
-export function put_stone(point: [number, number], black_turn: boolean, board: Board) {
-  const raw_number = point[0]
-  const column_number = point[1]
-  if (black_turn){
-    if (!board.black[raw_number]![column_number]){
-      board.black[raw_number]![column_number] = !board.black[raw_number]![column_number]
+export function put_stone(
+  point: [number, number],
+  black_turn: boolean,
+  board: Board
+) {
+  const row_number = point[0];
+  const column_number = point[1];
+
+  if (
+    row_number >= 0 &&
+    row_number <= 7 &&
+    column_number >= 0 &&
+    column_number <= 7
+  ) {
+    if (
+      !board.black[row_number]![column_number] &&
+      !board.white[row_number]![column_number]
+    ) {
+      if (black_turn) {
+        board.black[row_number]![column_number] = true;
+      } else {
+        board.white[row_number]![column_number] = true;
+      }
+      return true;
+    } else {
+      return false;
     }
+  } else {
+    return false;
   }
-  if (!black_turn){
-    if(!board.white[raw_number]![column_number]){
-      board.white[raw_number]![column_number] = !board.white[raw_number]![column_number]
-    }
-  }
-  return board
 }
 
 //[行番号, 列番号]を受け取って石をひっくり返す
-export function flip_stone(point: [number, number], board: Board) {
-  const raw_number = point[0]
-  const column_number = point[1]
-  if (board.black[raw_number]![column_number]){
-    if (!board.white[raw_number]![column_number]){
-      board.black[raw_number]![column_number] = !board.black[raw_number]![column_number]
-      board.white[raw_number]![column_number] = !board.white[raw_number]![column_number]
+export function flip_stone(point: [number, number], board: Board): boolean {
+  const row_number = point[0];
+  const column_number = point[1];
+
+  if (
+    row_number >= 0 &&
+    row_number <= 7 &&
+    column_number >= 0 &&
+    column_number <= 7
+  ) {
+    if (
+      board.black[row_number]![column_number] ||
+      board.white[row_number]![column_number]
+    ) {
+      board.black[row_number]![column_number] =
+        !board.black[row_number]![column_number];
+      board.white[row_number]![column_number] =
+        !board.white[row_number]![column_number];
+      return true;
+    } else {
+      return false;
     }
+  } else {
+    return false;
   }
-  else if (!board.black[raw_number]![column_number]){
-    if (board.white[raw_number]![column_number]){
-      board.black[raw_number]![column_number] = !board.black[raw_number]![column_number]
-      board.white[raw_number]![column_number] = !board.white[raw_number]![column_number]
-    }
-  }
-  return board
 }
 
 //手番を進める
 export function move_turn(board: Board) {
-  board.black_turn = !board.black_turn
-  return board
+  board.black_turn = !board.black_turn;
+  return board;
 }
 
 //"英語小文字+数字"情報を受け取って[number, number]にする
 export function parse_coord(coord_str: string): [number, number] {
-  const raw_str = coord_str.split("")[1]
-  const column_str = coord_str.split("")[0]
-  let [raw_number, column_number] = [-1, -1]
-  
-  if (raw_str === "1"){
-    raw_number = 0
-  }
-  if (raw_str === "2"){
-    raw_number = 1
-  }
-  if (raw_str === "3"){
-    raw_number = 2
-  }
-  if (raw_str === "4"){
-    raw_number = 3
-  }
-  if (raw_str === "5"){
-    raw_number = 4
-  }
-  if (raw_str === "6"){
-    raw_number = 5
-  }
-  if (raw_str === "7"){
-    raw_number = 6
-  }
-  if (raw_str === "8"){
-    raw_number = 7
+  if (coord_str.length !== 2) {
+    return [-1, -1];
   }
 
-  if (column_str === "a"){
-    column_number = 0
+  const row_str = coord_str.split('')[1];
+  const column_str = coord_str.split('')[0];
+  let [row_number, column_number] = [-1, -1];
+
+  if (row_str === '1') {
+    row_number = 0;
   }
-  if (column_str === "b"){
-    column_number = 1
+  if (row_str === '2') {
+    row_number = 1;
   }
-  if (column_str === "c"){
-    column_number = 2
+  if (row_str === '3') {
+    row_number = 2;
   }
-  if (column_str === "d"){
-    column_number = 3
+  if (row_str === '4') {
+    row_number = 3;
   }
-  if (column_str === "e"){
-    column_number = 4
+  if (row_str === '5') {
+    row_number = 4;
   }
-  if (column_str === "f"){
-    column_number = 5
+  if (row_str === '6') {
+    row_number = 5;
   }
-  if (column_str === "g"){
-    column_number = 6
+  if (row_str === '7') {
+    row_number = 6;
   }
-  if (column_str === "h"){
-    column_number = 7
+  if (row_str === '8') {
+    row_number = 7;
   }
-  return [raw_number, column_number]
+
+  if (column_str === 'a') {
+    column_number = 0;
+  }
+  if (column_str === 'b') {
+    column_number = 1;
+  }
+  if (column_str === 'c') {
+    column_number = 2;
+  }
+  if (column_str === 'd') {
+    column_number = 3;
+  }
+  if (column_str === 'e') {
+    column_number = 4;
+  }
+  if (column_str === 'f') {
+    column_number = 5;
+  }
+  if (column_str === 'g') {
+    column_number = 6;
+  }
+  if (column_str === 'h') {
+    column_number = 7;
+  }
+
+  if (row_number != -1 && column_number != -1) {
+    return [row_number, column_number];
+  }
+
+  return [-1, -1];
+}
+
+//[number, number]分だけ[number, number]から移動する
+export function add_vec(
+  p: readonly [number, number],
+  q: readonly [number, number]
+): [number, number] {
+  const new_p: [number, number] = [0, 0];
+  new_p[0] = p[0] + q[0];
+  new_p[1] = p[1] + q[1];
+  return new_p;
+}
+
+export const DIRECTIONS = {
+  up: [-1, 0],
+  down: [1, 0],
+  left: [0, -1],
+  right: [0, 1],
+  ul: [-1, -1],
+  ur: [-1, 1],
+  dl: [1, -1],
+  dr: [1, 1],
+} as const;
+
+//一定方向にひっくり返せる石があるか判断する
+export function judge_flip_1d(
+  p: readonly [number, number],
+  q: readonly [number, number],
+  board: Board
+): [number, number][] {
+  let flipable_stones = [];
+  let new_p: [number, number] = add_vec(p, q);
+  if (board.black_turn) {
+    let w_row = board.white[new_p[0]];
+    if (w_row == undefined || !w_row[new_p[1]]) {
+      return [];
+    }
+    while (w_row != undefined && w_row[new_p[1]]) {
+      flipable_stones.push(new_p);
+      new_p = add_vec(new_p, q);
+      w_row = board.white[new_p[0]];
+    }
+    let b_row = board.black[new_p[0]];
+    if (b_row != undefined && b_row[new_p[1]]) {
+      return flipable_stones;
+    }
+    return [];
+  } else {
+    let b_row = board.black[new_p[0]];
+    if (b_row == undefined || !b_row[new_p[1]]) {
+      return [];
+    }
+    while (b_row != undefined && b_row[new_p[1]]) {
+      flipable_stones.push(new_p);
+      new_p = add_vec(new_p, q);
+      b_row = board.black[new_p[0]];
+    }
+    let w_row = board.white[new_p[0]];
+    if (w_row != undefined && w_row[new_p[1]]) {
+      return flipable_stones;
+    }
+    return [];
+  }
+}
+
+//[number, number]を受け取って合法かを判断する
+export function is_valid_move(p: [number, number], board: Board): boolean {
+  let judge_number = 0;
+
+  const w_row = board.white[p[0]];
+  const b_row = board.black[p[0]];
+
+  if (b_row == undefined || b_row[p[1]] || w_row == undefined || w_row[p[1]]) {
+    return false;
+  }
+  for (const property in DIRECTIONS) {
+    if (judge_flip_1d(p, Reflect.get(DIRECTIONS, property), board).length > 0) {
+      judge_number++;
+    }
+  }
+  if (judge_number > 0) {
+    return true;
+  }
+  return false;
+}
+
+//合法手を全表示する
+export function all_valid_moves(board: Board): [number, number][] {
+  const can_put_place: [number, number][] = [];
+  for (let i = 0; i < 9; i++) {
+    for (let j = 0; j < 9; j++) {
+      if (is_valid_move([i, j], board)) {
+        can_put_place.push([i, j]);
+      }
+    }
+  }
+  return can_put_place;
+}
+
+//その時の盤面を表示 ※ただしおける場所を-で表示
+export function stringify_board(board: Board): string {
+  let can_put_place: [number, number][] = all_valid_moves(board);
+  let Hyouji = `   a b c d e f g h
+   - - - - - - - -
+`;
+  board.black.forEach((r, i) => {
+    Hyouji = Hyouji + String(i + 1) + ' |';
+    r.forEach((b, j) => {
+      let c = ' ';
+      if (board.white[i]![j]) {
+        c = 'o';
+      }
+      if (b) {
+        c = 'x';
+      }
+      for (const element of can_put_place) {
+        if (element[0] === i && element[1] === j) {
+          c = '-';
+        }
+      }
+      Hyouji = Hyouji + c + '|';
+    });
+    Hyouji = Hyouji + '\n';
+  });
+  Hyouji = Hyouji + '   - - - - - - - -' + '\n';
+  return Hyouji;
+}
+
+//ひっくり返せるところをすべてリスト化する
+export function flipable_all_places(
+  p: [number, number],
+  board: Board
+): [number, number][] {
+  let can_flip_places: [number, number][] = [];
+  for (const property in DIRECTIONS) {
+    const q: [number, number] = Reflect.get(DIRECTIONS, property);
+    can_flip_places = can_flip_places.concat(judge_flip_1d(p, q, board));
+  }
+  return can_flip_places;
+}
+
+export enum Gamestatus {
+  Ok,
+  Pass,
+  End,
+  Error,
+}
+
+//現在の盤面と次の着手が与えられて次の盤面を返す
+export function next_state(
+  board: Board,
+  p: [number, number]
+): [Board, Gamestatus] {
+  if (is_valid_move(p, board) && put_stone(p, board.black_turn, board)) {
+    const can_flip_places = flipable_all_places(p, board);
+    for (const elements of can_flip_places) {
+      flip_stone(elements, board);
+    }
+    board = move_turn(board);
+
+    if (all_valid_moves(board).length > 0) {
+      return [board, Gamestatus.Ok];
+    }
+
+    if (all_valid_moves(board).length === 0) {
+      board = move_turn(board);
+      if (all_valid_moves(board).length === 0) {
+        return [board, Gamestatus.End];
+      } else {
+        return [board, Gamestatus.Pass];
+      }
+    }
+  }
+  return [board, Gamestatus.Error];
 }
