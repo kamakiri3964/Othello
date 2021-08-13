@@ -24,6 +24,8 @@ export type Game = {
   board: Board;
   canvas: HTMLCanvasElement;
   user_input: [number, number] | null;
+  message_holder: HTMLSpanElement;
+  now_gaming: boolean;
 };
 
 export function register_mouse_input_listner(game: Game): void {
@@ -36,22 +38,50 @@ export function register_mouse_input_listner(game: Game): void {
   });
 }
 
-export function create_game(canvas: HTMLCanvasElement): Game {
+export function put_start_button(
+  game: Game,
+  start_button: HTMLButtonElement
+): void {
+  start_button.addEventListener('click', (e: MouseEvent) => {
+    game.now_gaming = true;
+    start_button.style.display = 'none';
+    game.message_holder.innerText =
+      'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
+  });
+}
+
+export function create_game(
+  canvas: HTMLCanvasElement,
+  message_holder: HTMLSpanElement,
+  start_button: HTMLButtonElement
+): Game {
   const game = {
     last: performance.now(),
     interval: 1000 / 60, // ms
     board: generate_initial_board(),
     canvas: canvas,
     user_input: null,
+    message_holder: message_holder,
+    now_gaming: false,
   };
+  message_holder.innerText = '「開始」ボタンを押してください';
+  start_button.style.display = 'inline';
   register_mouse_input_listner(game);
+  put_start_button(game, start_button);
   return game;
 }
 
 function update_state(game: Game): boolean {
-  if (game.user_input !== null) {
+  if (!game.now_gaming && game.user_input !== null) {
+    game.user_input = null;
+  }
+
+  if (game.now_gaming && game.user_input !== null) {
     const [board, status] = next_state(game.board, game.user_input);
-    if (status !== Gamestatus.Error) {
+    if (status === Gamestatus.Error) {
+      return false;
+    } else {
+      game.message_holder.innerText = create_message(game.board, status);
       return true;
     }
   }
@@ -70,10 +100,44 @@ export function start_loop(game: Game, canvas: HTMLCanvasElement): void {
     while (delta >= game.interval) {
       delta -= game.interval;
       game.last = now - delta;
-      // ここで盤面の更新・描画処理を行う
       update_game(game);
     }
     requestAnimationFrame(run);
   };
   requestAnimationFrame(run);
+}
+
+export function create_message(board: Board, status: Gamestatus): string {
+  const b_score = '黒： ' + calc_score(board)[0];
+  const w_score = '白： ' + calc_score(board)[1];
+  const score = b_score + '\n' + w_score + '\n';
+
+  if (status === Gamestatus.Ok) {
+    if (board.black_turn) {
+      return score + '黒の手番です';
+    } else {
+      return score + '白の手番です';
+    }
+  } else if (status === Gamestatus.Error) {
+    if (board.black_turn) {
+      return score + 'そこには置くことができません。黒の手番です。';
+    } else {
+      return score + 'そこには置くことができません。白の手番です。';
+    }
+  } else if (status === Gamestatus.Pass) {
+    if (board.black_turn) {
+      return score + '白は置くところがないのでパスです。再度黒の手番です。';
+    } else {
+      return score + '黒は置くところがないのでパスです。再度白の手番です。';
+    }
+  } else if (status === Gamestatus.End) {
+    if (calc_score(board)[0] > calc_score(board)[1]) {
+      return score + 'ゲーム終了です。' + '\n' + '黒の勝ちです。';
+    } else if (calc_score(board)[0] < calc_score(board)[1]) {
+      return score + 'ゲーム終了です。' + '\n' + '白の勝ちです。';
+    } else if ((calc_score(board)[0] = calc_score(board)[1])) {
+      return score + 'ゲーム終了です。' + '\n' + '引き分けです。';
+    }
+  }
+  return 'バグ';
 }

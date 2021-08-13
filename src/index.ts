@@ -21,10 +21,16 @@ import {
 
 const main = () => {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  const message_holder = document.getElementById('message') as HTMLSpanElement;
+  const start_button = document.getElementById(
+    'start_button'
+  ) as HTMLButtonElement;
   canvas.height = 400;
   canvas.width = 400;
+  message_holder.innerText = 'さあゲームを始めましょう';
+  start_button.style.display = 'none';
 
-  const game = create_game(canvas);
+  const game = create_game(canvas, message_holder, start_button);
   draw_board(game.board, canvas);
   start_loop(game, canvas);
 };

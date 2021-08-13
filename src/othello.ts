@@ -312,8 +312,8 @@ export function is_valid_move(p: [number, number], board: Board): boolean {
 //合法手を全表示する
 export function all_valid_moves(board: Board): [number, number][] {
   const can_put_place: [number, number][] = [];
-  for (let i = 0; i < 9; i++) {
-    for (let j = 0; j < 9; j++) {
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
       if (is_valid_move([i, j], board)) {
         can_put_place.push([i, j]);
       }
