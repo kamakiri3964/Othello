@@ -12,18 +12,24 @@ export function draw_grid(canvas: HTMLCanvasElement): void {
     short = canvas.height;
   }
 
+  let [field_sp_x, field_sp_y] = [short / 8, short / 8];
+  let field_size_length = (short * 3) / 4;
+
   if (ctx != undefined) {
     // 基礎の盤面長方形に塗りつぶす 左上(短辺1/8, 短辺1/8) 幅: 短辺3/4, 高さ: 短辺3/4
     ctx.fillStyle = 'green';
-    ctx.fillRect(short / 8, short / 8, (short * 3) / 4, (short * 3) / 4);
+    ctx.fillRect(field_sp_x, field_sp_y, field_size_length, field_size_length);
 
     // 縦線をひく (短辺1/8, 短辺1/8) から (短辺1/8, 短辺7/8)までを右に短辺3/32ずつ
     ctx.strokeStyle = 'gray';
     ctx.lineWidth = 2;
     for (let i = 0; i < 9; i++) {
       ctx.beginPath();
-      ctx.moveTo(short / 8 + ((short * 3) / 32) * i, short / 8);
-      ctx.lineTo(short / 8 + ((short * 3) / 32) * i, (short * 7) / 8);
+      ctx.moveTo(field_sp_x + (field_size_length / 8) * i, field_sp_y);
+      ctx.lineTo(
+        field_sp_x + (field_size_length / 8) * i,
+        field_sp_y + field_size_length
+      );
       ctx.stroke();
     }
 
@@ -32,8 +38,11 @@ export function draw_grid(canvas: HTMLCanvasElement): void {
     ctx.lineWidth = 2;
     for (let i = 0; i < 9; i++) {
       ctx.beginPath();
-      ctx.moveTo(short / 8, short / 8 + ((short * 3) / 32) * i);
-      ctx.lineTo((short * 7) / 8, short / 8 + ((short * 3) / 32) * i);
+      ctx.moveTo(field_sp_x, field_sp_y + (field_size_length / 8) * i);
+      ctx.lineTo(
+        field_sp_x + field_size_length,
+        field_sp_y + (field_size_length / 8) * i
+      );
       ctx.stroke();
     }
   }
