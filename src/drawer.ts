@@ -169,6 +169,14 @@ export function draw_pieces(board: Board, canvas: HTMLCanvasElement): void {
 
 export function draw_board(board: Board, canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext('2d');
+  const field_size = [
+    document.body.clientWidth,
+    window.innerHeight,
+    800,
+  ].reduce((a, b) => Math.min(a, b));
+  canvas.height = field_size;
+  canvas.width = field_size;
+
   if (ctx != undefined) {
     ctx.clearRect(
       ...convert_vec(0, 0, canvas),

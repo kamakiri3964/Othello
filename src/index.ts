@@ -25,8 +25,7 @@ const main = () => {
   const start_button = document.getElementById(
     'start_button'
   ) as HTMLButtonElement;
-  canvas.height = 400;
-  canvas.width = 400;
+
   message_holder.innerText = 'さあゲームを始めましょう';
   start_button.style.display = 'none';
 

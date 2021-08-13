@@ -25,6 +25,7 @@ export type Game = {
   canvas: HTMLCanvasElement;
   user_input: [number, number] | null;
   message_holder: HTMLSpanElement;
+  start_button: HTMLButtonElement;
   now_gaming: boolean;
 };
 
@@ -44,7 +45,9 @@ export function put_start_button(
 ): void {
   start_button.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
-    start_button.style.display = 'none';
+    game.start_button.style.display = 'none';
+    game.board = generate_initial_board();
+    draw_board(game.board, game.canvas);
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
   });
@@ -62,12 +65,13 @@ export function create_game(
     canvas: canvas,
     user_input: null,
     message_holder: message_holder,
+    start_button: start_button,
     now_gaming: false,
   };
   message_holder.innerText = '「開始」ボタンを押してください';
-  start_button.style.display = 'inline';
+  game.start_button.style.display = 'inline';
   register_mouse_input_listner(game);
-  put_start_button(game, start_button);
+  put_start_button(game, game.start_button);
   return game;
 }
 
@@ -80,8 +84,14 @@ function update_state(game: Game): boolean {
     const [board, status] = next_state(game.board, game.user_input);
     if (status === Gamestatus.Error) {
       return false;
+    }
+    if (status === Gamestatus.End) {
+      game.message_holder.innerText = create_message(game, status);
+      game.now_gaming = false;
+      game.start_button.style.display = 'inline';
+      return true;
     } else {
-      game.message_holder.innerText = create_message(game.board, status);
+      game.message_holder.innerText = create_message(game, status);
       return true;
     }
   }
@@ -107,7 +117,8 @@ export function start_loop(game: Game, canvas: HTMLCanvasElement): void {
   requestAnimationFrame(run);
 }
 
-export function create_message(board: Board, status: Gamestatus): string {
+export function create_message(game: Game, status: Gamestatus): string {
+  const board = game.board;
   const b_score = '黒： ' + calc_score(board)[0];
   const w_score = '白： ' + calc_score(board)[1];
   const score = b_score + '\n' + w_score + '\n';
@@ -132,11 +143,32 @@ export function create_message(board: Board, status: Gamestatus): string {
     }
   } else if (status === Gamestatus.End) {
     if (calc_score(board)[0] > calc_score(board)[1]) {
-      return score + 'ゲーム終了です。' + '\n' + '黒の勝ちです。';
+      return (
+        score +
+        'ゲーム終了です。' +
+        '\n' +
+        '黒の勝ちです。' +
+        '\n' +
+        '再度ゲームを開始するには「開始」ボタンを押してください。'
+      );
     } else if (calc_score(board)[0] < calc_score(board)[1]) {
-      return score + 'ゲーム終了です。' + '\n' + '白の勝ちです。';
+      return (
+        score +
+        'ゲーム終了です。' +
+        '\n' +
+        '白の勝ちです。' +
+        '\n' +
+        '再度ゲームを開始するには「開始」ボタンを押してください。'
+      );
     } else if ((calc_score(board)[0] = calc_score(board)[1])) {
-      return score + 'ゲーム終了です。' + '\n' + '引き分けです。';
+      return (
+        score +
+        'ゲーム終了です。' +
+        '\n' +
+        '引き分けです。' +
+        '\n' +
+        '再度ゲームを開始するには「開始」ボタンを押してください。'
+      );
     }
   }
   return 'バグ';
