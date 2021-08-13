@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-game": "ts-node src/main.ts",
+    "start-game": "ts-node -O '{\"module\": \"commonjs\"}' src/main.ts",
     "build": "webpack",
     "serve": "webpack serve",
     "format": "prettier --write ./src",

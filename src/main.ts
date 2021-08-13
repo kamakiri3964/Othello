@@ -83,6 +83,13 @@ const main = () => {
     } else if (status === Gamestatus.End) {
       console.log(stringify_board(board));
       console.log('ゲーム終了です。');
+      if (calc_score(board)[0] > calc_score(board)[1]) {
+        console.log('黒の勝ちです。');
+      } else if (calc_score(board)[0] < calc_score(board)[1]) {
+        console.log('白の勝ちです。');
+      } else if ((calc_score(board)[0] = calc_score(board)[1])) {
+        console.log('引き分けです。');
+      }
     }
   });
 };
