@@ -175,7 +175,19 @@ export function draw_board(board: Board, canvas: HTMLCanvasElement): void {
       ...convert_vec(100, 100, canvas)
     );
   }
-
   draw_grid(canvas);
   draw_pieces(board, canvas);
+}
+
+export function input_convert_place(
+  user_input: [number, number],
+  canvas: HTMLCanvasElement
+): [number, number] {
+  const user_input_100 = [
+    (user_input[0] / canvas.height) * 100,
+    (user_input[1] / canvas.width) * 100,
+  ];
+  const i = Math.round((user_input_100[0]! - 6.75) / 12.5);
+  const j = Math.round((user_input_100[1]! - 6.75) / 12.5);
+  return [i, j];
 }
