@@ -38,17 +38,16 @@ impl Board {
 
     pub fn legal(&self) -> u64 {
         let n_shifts_and_masks = [
-            (1, 0x7e7e7e7e7e7e7e7e),  // right / left
-            (7, 0x007e7e7e7e7e7e00),  // down left / up right
-            (8, 0x00ffffffffffff00),  // down / up 
-            (9, 0x007e7e7e7e7e7e00),  // down right / up left
+            (1u64, 0x7e7e7e7e7e7e7e7e),  // right / left
+            (7u64, 0x007e7e7e7e7e7e00),  // down left / up right
+            (8u64, 0x00ffffffffffff00),  // down / up 
+            (9u64, 0x007e7e7e7e7e7e00),  // down right / up left
         ];
         let d_shifts = [Shl::shl, Shr::shr];
         let mut candidate = 0;
 
         for (n_shifts, mask) in n_shifts_and_masks.iter() {
             let mask = mask & self.opponent;
-
             for shift in d_shifts.iter() {
                 let mut bits = mask & shift(self.player, n_shifts);
                 for _ in 0..5 {
@@ -58,6 +57,55 @@ impl Board {
             }
         }
         candidate & !(self.player | self.opponent)
+    }
+
+    pub fn is_legal(&self, pos: u64) -> bool {
+        pos.count_ones() == 1 && self.legal() & pos != 0
+    }
+
+    pub fn reverse(&self, pos: u64) -> u64 {
+        let n_shifts_and_masks = [
+            (1u64, 0x7e7e7e7e7e7e7e7e),  // right / left
+            (7u64, 0x007e7e7e7e7e7e00),  // down left / up right
+            (8u64, 0x00ffffffffffff00),  // down / up 
+            (9u64, 0x007e7e7e7e7e7e00),  // down right / up left
+        ];
+        let d_shifts = [Shl::shl, Shr::shr];
+        let mut reverse = 0;
+        for (n_shifts, mask) in n_shifts_and_masks.iter() {
+            for shift in d_shifts.iter() {
+                let mut r = 0;
+                let mut p = shift(pos, n_shifts);
+                while p & mask & self.opponent != 0u64 {
+                    r |= p;
+                    p = shift(p, n_shifts);
+                }
+                if p & self.player != 0u64 {
+                    reverse |= r;
+                }
+            }
+        }
+        reverse
+    }
+
+    pub fn put_uncheck(&self, pos: u64) -> (u64, u64) {
+        let disc_to_flip = self.reverse(pos);
+        let new_o = self.player | pos | disc_to_flip;
+        let new_p = self.opponent ^ disc_to_flip;
+        (new_o, new_p)
+    }
+
+    pub fn put(&self, pos: u64) -> Result<Self, &str> {
+        if !self.is_legal(pos) {
+            return Err("illegal position to put")
+        }
+
+        let (p, o) = self.put_uncheck(pos);
+        Ok(Board{
+            player: p,
+            opponent: o,
+            is_player_black: !self.is_player_black
+        })
     }
 }
 
@@ -144,5 +192,27 @@ mod tests {
 "#;
         let legal = Board::parse(board_string);
         assert_eq!(board.legal(), legal.player);
+    }
+
+    #[test]
+    fn test_reverse() {
+        let board = Board::new();
+        let to_flip = board.reverse(0x0000100000000000);
+        assert_eq!(to_flip, 0x0000001000000000);
+        let board_string = r#"   A B C D E F G H
+1 | | | | | | | | |
+2 | |-|-|-|-| | | |
+3 | | |O|O| | | | |
+4 | |-|O|X|X|-| | |
+5 |X|X|X|O|O|-| | |
+6 |O|X|X|O|O|-| | |
+7 |-|O|X|-|-| | | |
+8 |-|-|O| | | | | |
+"#;
+        let board = Board::parse(board_string);
+        let to_flip = board.reverse(0x0000000000008000);
+        assert_eq!(to_flip, 0x0000000000804000);
+        let to_flip = board.reverse(0x0000000000001000);
+        assert_eq!(to_flip, 0x0000000010100000);
     }
 }
