@@ -22,8 +22,8 @@ impl Board {
         let mut black = 0;
         let mut white = 0;
         let v = s.split('\n').collect::<Vec<_>>();
-        v.iter().skip(1).enumerate().for_each(|(i, &b)| {
-            b.chars().skip(3).enumerate().for_each(|(j, a)| {
+        v.iter().by_ref().skip(1).take(8).enumerate().for_each(|(i, &b)| {
+            b.chars().by_ref().skip(3).enumerate().for_each(|(j, a)| {
                 if a == 'X' {
                     black |= UPPER_LEFT >> i * 8 + j / 2;
                 } else if a == 'O' {
@@ -31,6 +31,12 @@ impl Board {
                 }
             })
         });
+        let s = v[v.len()-2];
+        if s.split(":").collect::<Vec<_>>()[1] == " X" {
+            board.is_player_black = true;
+        } else {
+            board.is_player_black = false;
+        }
         board.player = black;
         board.opponent = white;
         board
@@ -134,7 +140,8 @@ impl fmt::Display for Board {
                 format!("{} {}|\n", i + 1, row)
             })
             .collect();
-        write!(f, "   A B C D E F G H\n{}", board)
+        let next = if self.is_player_black { "X" } else { "O" };
+        write!(f, "   A B C D E F G H\n{}\nnext: {}\n", board, next)
     }
 }
 
@@ -153,6 +160,8 @@ mod tests {
 6 | | | | | | | | |
 7 | | | | | | | | |
 8 | | | | | | | | |
+
+next: X
 "#;
         assert_eq!(format!("{}", board), board_string);
     }
@@ -178,6 +187,8 @@ mod tests {
 6 |O|X|X|O|O|-| | |
 7 |-|O|X|-|-| | | |
 8 |-|-|O| | | | | |
+
+next: X
 "#;
         let board = Board::parse(board_string);
         let board_string = r#"   A B C D E F G H
@@ -189,6 +200,8 @@ mod tests {
 6 | | | | | |X| | |
 7 |X| | |X|X| | | |
 8 |X|X| | | | | | |
+
+next: X
 "#;
         let legal = Board::parse(board_string);
         assert_eq!(board.legal(), legal.player);
@@ -208,6 +221,8 @@ mod tests {
 6 |O|X|X|O|O|-| | |
 7 |-|O|X|-|-| | | |
 8 |-|-|O| | | | | |
+
+next: X
 "#;
         let board = Board::parse(board_string);
         let to_flip = board.reverse(0x0000000000008000);
