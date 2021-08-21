@@ -115,6 +115,37 @@ impl Board {
     }
 }
 
+pub fn parse_coord(s: &str) -> Result<u64, &str> {
+    let v = s.chars().collect::<Vec<_>>();
+    if v.len() != 2 {
+        return Err("invalid coordition format")
+    }
+    let mut c = 0x8000000000000000;
+    match v[0] {
+        'a' => { }
+        'b' => { c >>= 1; }
+        'c' => { c >>= 2; }
+        'd' => { c >>= 3; }
+        'e' => { c >>= 4; }
+        'f' => { c >>= 5; }
+        'g' => { c >>= 6; }
+        'h' => { c >>= 7; }
+        _ => { return Err("invalid coordition format")}
+    }
+    match v[1] {
+        '1' => { }
+        '2' => { c >>= 1 * 8; }
+        '3' => { c >>= 2 * 8; }
+        '4' => { c >>= 3 * 8; }
+        '5' => { c >>= 4 * 8; }
+        '6' => { c >>= 5 * 8; }
+        '7' => { c >>= 6 * 8; }
+        '8' => { c >>= 7 * 8; }
+        _ => { return Err("invalid coordition format")}
+    }
+    Ok(c)
+}
+
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         const UPPER_LEFT: u64 = 0x8000000000000000;
@@ -229,5 +260,15 @@ next: X
         assert_eq!(to_flip, 0x0000000000804000);
         let to_flip = board.reverse(0x0000000000001000);
         assert_eq!(to_flip, 0x0000000010100000);
+    }
+
+    #[test]
+    fn test_parse_coord() {
+        assert_eq!(parse_coord("a1"), Ok(0x8000000000000000));
+        assert_eq!(parse_coord("c7"), Ok(0x0000000000002000));
+        assert_eq!(parse_coord("c10"), Err("invalid coordition format"));
+        assert_eq!(parse_coord("z1"), Err("invalid coordition format"));
+        assert_eq!(parse_coord("a9"), Err("invalid coordition format"));
+        assert_eq!(parse_coord("A1"), Err("invalid coordition format"));
     }
 }
