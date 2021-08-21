@@ -1,6 +1,13 @@
 use std::{fmt, ops::{Shl, Shr}};
 
 #[derive(Debug, PartialEq, Eq)]
+pub enum GameStatus {
+    Ok,
+    Pass,
+    End
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct Board {
     pub player: u64,
     pub opponent: u64,
@@ -98,7 +105,7 @@ impl Board {
         let disc_to_flip = self.reverse(pos);
         let new_o = self.player | pos | disc_to_flip;
         let new_p = self.opponent ^ disc_to_flip;
-        (new_o, new_p)
+        (new_p, new_o)
     }
 
     pub fn put(&self, pos: u64) -> Result<Self, &str> {
@@ -112,6 +119,31 @@ impl Board {
             opponent: o,
             is_player_black: !self.is_player_black
         })
+    }
+
+    pub fn next(&self, pos: u64) -> Result<(Self, GameStatus), &str> {
+        match self.put(pos) {
+            Ok(mut next) => {
+                if next.legal() != 0 {
+                    Ok((next, GameStatus::Ok))
+                } else {
+                    let t = next.player;
+                    next.player = next.opponent;
+                    next.opponent = t;
+                    next.is_player_black = !next.is_player_black;
+                    if next.legal() != 0 {
+                        Ok((next, GameStatus::Pass))     // pass
+                    } else {
+                        let t = next.player;
+                        next.player = next.opponent;
+                        next.opponent = t;
+                        next.is_player_black = !next.is_player_black;
+                        Ok((next, GameStatus::End))    // finish game
+                    }
+                }
+            }
+            Err(x) => { Err(x) }
+        }
     }
 }
 
@@ -270,5 +302,81 @@ next: X
         assert_eq!(parse_coord("z1"), Err("invalid coordition format"));
         assert_eq!(parse_coord("a9"), Err("invalid coordition format"));
         assert_eq!(parse_coord("A1"), Err("invalid coordition format"));
+    }
+
+    #[test]
+    fn test_next_state() {
+        let mut board = Board::new();
+        let mut p = 0;
+        if let Ok(t )= parse_coord("f5") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("d6") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("c5") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("f4") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("e7") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("f6") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("g5") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("e6") { p = t }
+        if let Ok((b, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::Ok);
+            board = b
+        }
+        if let Ok(t )= parse_coord("e3") { p = t }
+        if let Ok((_, status)) = board.next(p) {
+            assert_eq!(status, GameStatus::End);
+        }
+    }
+
+    #[test]
+    fn test_next_state_pass() {
+        let moves = [
+            "f5", "f6", "d3", "g5", "h5", "h4", "f7", "h6"
+        ];
+        let exp = [
+            GameStatus::Ok,
+            GameStatus::Ok,
+            GameStatus::Ok,
+            GameStatus::Ok,
+            GameStatus::Ok,
+            GameStatus::Ok,
+            GameStatus::Ok,
+            GameStatus::Pass
+        ];
+        let mut board = Board::new();
+        let mut p = 0;
+        for (m, e) in moves.iter().zip(exp.iter()) {
+            if let Ok(t )= parse_coord(m) { p = t }
+            if let Ok((b, status)) = board.next(p) {
+                assert_eq!(status, *e);
+                board = b;
+            }
+        }
     }
 }
