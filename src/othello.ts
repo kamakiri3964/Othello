@@ -17,6 +17,79 @@ export type Board = {
   black_turn: boolean;
 };
 
+//export type Board_history = new Array(64).fill(Board)
+
+/*
+export type Board_history =[
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+  Board,
+]
+*/
+
+export type Board_history = Board[]
+
 //盤面初期化
 export function generate_initial_board(): Board {
   const black = new Array(8);
@@ -95,7 +168,7 @@ export function calc_score(board: Board): [number, number] {
 export function put_stone(
   point: [number, number],
   black_turn: boolean,
-  board: Board
+  board: Board, board_history: Board_history  
 ) {
   const row_number = point[0];
   const column_number = point[1];
@@ -110,6 +183,7 @@ export function put_stone(
       !board.black[row_number]![column_number] &&
       !board.white[row_number]![column_number]
     ) {
+      add_board_history_turn(board, board_history)
       if (black_turn) {
         board.black[row_number]![column_number] = true;
       } else {
@@ -153,7 +227,7 @@ export function flip_stone(point: [number, number], board: Board): boolean {
 }
 
 //手番を進める
-export function move_turn(board: Board) {
+export function move_turn(board: Board):Board {
   board.black_turn = !board.black_turn;
   return board;
 }
@@ -374,16 +448,19 @@ export enum Gamestatus {
 //現在の盤面と次の着手が与えられて次の盤面を返す
 export function next_state(
   board: Board,
-  p: [number, number]
+  p: [number, number],
+  board_history: Board_history,
 ): [Board, Gamestatus] {
-  if (is_valid_move(p, board) && put_stone(p, board.black_turn, board)) {
+  if (is_valid_move(p, board) && put_stone(p, board.black_turn, board, board_history)) {
     const can_flip_places = flipable_all_places(p, board);
     for (const elements of can_flip_places) {
       flip_stone(elements, board);
     }
+
     board = move_turn(board);
 
     if (all_valid_moves(board).length > 0) {
+
       return [board, Gamestatus.Ok];
     }
 
@@ -411,4 +488,21 @@ export function deep_copy_board(board: Readonly<Board>): Board {
     black: deep_copy_board_array(board.black),
     white: deep_copy_board_array(board.white),
   };
+}
+
+export function add_board_history_turn(board:Readonly<Board>, board_history: Board_history):Board_history{
+  board_history.push(deep_copy_board(board));
+  return board_history
+}
+
+export function cancel_put(board:Board, board_history: Board_history):boolean{
+  let recent_board = board_history[board_history.length-1]
+  if(recent_board === undefined || board_history.length<3){
+    return false
+  }
+  if(board_history.length >= 3 && recent_board !== undefined){
+    board_history.pop()
+    recent_board = board_history[board_history.length-1]
+  }
+  return true
 }
