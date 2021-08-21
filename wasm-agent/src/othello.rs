@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops::{Shl, Shr}};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Board {
@@ -34,6 +34,30 @@ impl Board {
         board.player = black;
         board.opponent = white;
         board
+    }
+
+    pub fn legal(&self) -> u64 {
+        let n_shifts_and_masks = [
+            (1, 0x7e7e7e7e7e7e7e7e),  // right / left
+            (7, 0x007e7e7e7e7e7e00),  // down left / up right
+            (8, 0x00ffffffffffff00),  // down / up 
+            (9, 0x007e7e7e7e7e7e00),  // down right / up left
+        ];
+        let d_shifts = [Shl::shl, Shr::shr];
+        let mut candidate = 0;
+
+        for (n_shifts, mask) in n_shifts_and_masks.iter() {
+            let mask = mask & self.opponent;
+
+            for shift in d_shifts.iter() {
+                let mut bits = mask & shift(self.player, n_shifts);
+                for _ in 0..5 {
+                    bits |= mask & shift(bits, n_shifts);
+                }
+                candidate |= shift(bits, n_shifts);
+            }
+        }
+        candidate & !(self.player | self.opponent)
     }
 }
 
@@ -90,5 +114,35 @@ mod tests {
         let board = Board::new();
         let parsed_board = Board::parse(&format!("{}", board));
         assert_eq!(board, parsed_board);
+    }
+
+    #[test]
+    fn test_legal() {
+        let board = Board::new();
+        let legal = board.legal();
+        assert_eq!(legal, 0x0000102004080000);
+        let board_string = r#"   A B C D E F G H
+1 | | | | | | | | |
+2 | |-|-|-|-| | | |
+3 | | |O|O| | | | |
+4 | |-|O|X|X|-| | |
+5 |X|X|X|O|O|-| | |
+6 |O|X|X|O|O|-| | |
+7 |-|O|X|-|-| | | |
+8 |-|-|O| | | | | |
+"#;
+        let board = Board::parse(board_string);
+        let board_string = r#"   A B C D E F G H
+1 | | | | | | | | |
+2 | |X|X|X|X| | | |
+3 | | | | | | | | |
+4 | |X| | | |X| | |
+5 | | | | | |X| | |
+6 | | | | | |X| | |
+7 |X| | |X|X| | | |
+8 |X|X| | | | | | |
+"#;
+        let legal = Board::parse(board_string);
+        assert_eq!(board.legal(), legal.player);
     }
 }
