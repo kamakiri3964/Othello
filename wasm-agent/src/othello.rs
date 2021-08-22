@@ -1,4 +1,5 @@
 use std::{fmt, ops::{Shl, Shr}};
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum GameStatus {
@@ -7,7 +8,7 @@ pub enum GameStatus {
     End
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Board {
     pub player: u64,
     pub opponent: u64,
