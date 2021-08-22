@@ -10,6 +10,9 @@ $(DATADIR)/random_boards.jsonl: $(BINDIR)/generate_random_boards.rs $(SRCS)
 $(DATADIR)/legal.jsonl: $(DATADIR)/random_boards.jsonl $(BINDIR)/generate_legal.rs $(SRCS)
 	cargo run --bin generate_legal < $(DATADIR)/random_boards.jsonl > $(DATADIR)/legal.jsonl
 
+$(DATADIR)/flippable.jsonl: $(DATADIR)/random_boards.jsonl $(BINDIR)/generate_flippable.rs $(SRCS)
+	cargo run --bin generate_flippable < $(DATADIR)/random_boards.jsonl > $(DATADIR)/flippable.jsonl
+
 .PHONY: test
 test: $(SRCS) $(CONF)
 	cargo test
