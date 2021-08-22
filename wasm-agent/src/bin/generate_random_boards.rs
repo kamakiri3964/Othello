@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use wasm_agent::{agent::{Agent, RandomAgent}, othello::{Board, GameStatus}};
+use wasm_agent::{
+    agent::{Agent, RandomAgent},
+    othello::{Board, GameStatus},
+};
 
 fn board_hash(board: &Board) -> u128 {
     ((board.player as u128) << 64) ^ (board.opponent as u128)
@@ -14,7 +17,7 @@ fn main() {
     let serialized = serde_json::to_string(&board).unwrap();
     println!("{}", serialized);
     let n = 1000;
-    let mut agent = RandomAgent::new();
+    let mut agent = RandomAgent::new(rand::thread_rng());
     for _ in 0..n {
         let p = agent.next(&board);
         match board.next(p) {
@@ -32,7 +35,9 @@ fn main() {
                     }
                 }
             }
-            Err(t) => { eprintln!("{}", t); }
+            Err(t) => {
+                eprintln!("{}", t);
+            }
         }
     }
 }

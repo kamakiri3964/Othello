@@ -1,11 +1,14 @@
-use std::{fmt, ops::{Shl, Shr}};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::{
+    fmt,
+    ops::{Shl, Shr},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum GameStatus {
     Ok,
     Pass,
-    End
+    End,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,16 +33,21 @@ impl Board {
         let mut black = 0;
         let mut white = 0;
         let v = s.split('\n').collect::<Vec<_>>();
-        v.iter().by_ref().skip(1).take(8).enumerate().for_each(|(i, &b)| {
-            b.chars().by_ref().skip(3).enumerate().for_each(|(j, a)| {
-                if a == 'X' {
-                    black |= UPPER_LEFT >> i * 8 + j / 2;
-                } else if a == 'O' {
-                    white |= UPPER_LEFT >> i * 8 + j / 2;
-                }
-            })
-        });
-        let s = v[v.len()-2];
+        v.iter()
+            .by_ref()
+            .skip(1)
+            .take(8)
+            .enumerate()
+            .for_each(|(i, &b)| {
+                b.chars().by_ref().skip(3).enumerate().for_each(|(j, a)| {
+                    if a == 'X' {
+                        black |= UPPER_LEFT >> i * 8 + j / 2;
+                    } else if a == 'O' {
+                        white |= UPPER_LEFT >> i * 8 + j / 2;
+                    }
+                })
+            });
+        let s = v[v.len() - 2];
         if s.split(":").collect::<Vec<_>>()[1] == " X" {
             board.is_player_black = true;
         } else {
@@ -52,10 +60,10 @@ impl Board {
 
     pub fn legal(&self) -> u64 {
         let n_shifts_and_masks = [
-            (1u64, 0x7e7e7e7e7e7e7e7e),  // right / left
-            (7u64, 0x007e7e7e7e7e7e00),  // down left / up right
-            (8u64, 0x00ffffffffffff00),  // down / up 
-            (9u64, 0x007e7e7e7e7e7e00),  // down right / up left
+            (1u64, 0x7e7e7e7e7e7e7e7e), // right / left
+            (7u64, 0x007e7e7e7e7e7e00), // down left / up right
+            (8u64, 0x00ffffffffffff00), // down / up
+            (9u64, 0x007e7e7e7e7e7e00), // down right / up left
         ];
         let d_shifts = [Shl::shl, Shr::shr];
         let mut candidate = 0;
@@ -79,10 +87,10 @@ impl Board {
 
     pub fn reverse(&self, pos: u64) -> u64 {
         let n_shifts_and_masks = [
-            (1u64, 0x7e7e7e7e7e7e7e7e),  // right / left
-            (7u64, 0x007e7e7e7e7e7e00),  // down left / up right
-            (8u64, 0x00ffffffffffff00),  // down / up 
-            (9u64, 0x007e7e7e7e7e7e00),  // down right / up left
+            (1u64, 0x7e7e7e7e7e7e7e7e), // right / left
+            (7u64, 0x007e7e7e7e7e7e00), // down left / up right
+            (8u64, 0x00ffffffffffff00), // down / up
+            (9u64, 0x007e7e7e7e7e7e00), // down right / up left
         ];
         let d_shifts = [Shl::shl, Shr::shr];
         let mut reverse = 0;
@@ -111,14 +119,14 @@ impl Board {
 
     pub fn put(&self, pos: u64) -> Result<Self, &str> {
         if !self.is_legal(pos) {
-            return Err("illegal position to put")
+            return Err("illegal position to put");
         }
 
         let (p, o) = self.put_uncheck(pos);
-        Ok(Board{
+        Ok(Board {
             player: p,
             opponent: o,
-            is_player_black: !self.is_player_black
+            is_player_black: !self.is_player_black,
         })
     }
 
@@ -133,17 +141,17 @@ impl Board {
                     next.opponent = t;
                     next.is_player_black = !next.is_player_black;
                     if next.legal() != 0 {
-                        Ok((next, GameStatus::Pass))     // pass
+                        Ok((next, GameStatus::Pass)) // pass
                     } else {
                         let t = next.player;
                         next.player = next.opponent;
                         next.opponent = t;
                         next.is_player_black = !next.is_player_black;
-                        Ok((next, GameStatus::End))    // finish game
+                        Ok((next, GameStatus::End)) // finish game
                     }
                 }
             }
-            Err(x) => { Err(x) }
+            Err(x) => Err(x),
         }
     }
 }
@@ -151,44 +159,75 @@ impl Board {
 pub fn parse_coord(s: &str) -> Result<u64, &str> {
     let v = s.chars().collect::<Vec<_>>();
     if v.len() != 2 {
-        return Err("invalid coordition format")
+        return Err("invalid coordition format");
     }
     let mut c = 0x8000000000000000;
     match v[0] {
-        'a' => { }
-        'b' => { c >>= 1; }
-        'c' => { c >>= 2; }
-        'd' => { c >>= 3; }
-        'e' => { c >>= 4; }
-        'f' => { c >>= 5; }
-        'g' => { c >>= 6; }
-        'h' => { c >>= 7; }
-        _ => { return Err("invalid coordition format")}
+        'a' => {}
+        'b' => {
+            c >>= 1;
+        }
+        'c' => {
+            c >>= 2;
+        }
+        'd' => {
+            c >>= 3;
+        }
+        'e' => {
+            c >>= 4;
+        }
+        'f' => {
+            c >>= 5;
+        }
+        'g' => {
+            c >>= 6;
+        }
+        'h' => {
+            c >>= 7;
+        }
+        _ => return Err("invalid coordition format"),
     }
     match v[1] {
-        '1' => { }
-        '2' => { c >>= 1 * 8; }
-        '3' => { c >>= 2 * 8; }
-        '4' => { c >>= 3 * 8; }
-        '5' => { c >>= 4 * 8; }
-        '6' => { c >>= 5 * 8; }
-        '7' => { c >>= 6 * 8; }
-        '8' => { c >>= 7 * 8; }
-        _ => { return Err("invalid coordition format")}
+        '1' => {}
+        '2' => {
+            c >>= 1 * 8;
+        }
+        '3' => {
+            c >>= 2 * 8;
+        }
+        '4' => {
+            c >>= 3 * 8;
+        }
+        '5' => {
+            c >>= 4 * 8;
+        }
+        '6' => {
+            c >>= 5 * 8;
+        }
+        '7' => {
+            c >>= 6 * 8;
+        }
+        '8' => {
+            c >>= 7 * 8;
+        }
+        _ => return Err("invalid coordition format"),
     }
     Ok(c)
 }
 
 pub fn get_vertical_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0102_0408_1020_4080) & 0xff00_0000_0000_0000) >> (8*7)) as u8
+    ((board.wrapping_mul(0x0102_0408_1020_4080) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
 }
 
 pub fn set_vertical_edge(edge: u8) -> u64 {
-    (((edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x8040_2010_0804_0201).wrapping_mul(0x0000_0000_0000_00ff) >> 7) & 0x0101_0101_0101_0101
+    (((edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x8040_2010_0804_0201)
+        .wrapping_mul(0x0000_0000_0000_00ff)
+        >> 7)
+        & 0x0101_0101_0101_0101
 }
 
 pub fn get_diag_up_right_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8*7)) as u8
+    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
 }
 
 pub fn set_diag_up_right_edge(edge: u8) -> u64 {
@@ -196,7 +235,7 @@ pub fn set_diag_up_right_edge(edge: u8) -> u64 {
 }
 
 pub fn get_diag_up_left_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8*7)) as u8
+    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
 }
 
 pub fn set_diag_up_left_edge(edge: u8) -> u64 {
@@ -333,47 +372,65 @@ next: X
     fn test_next_state() {
         let mut board = Board::new();
         let mut p = 0;
-        if let Ok(t )= parse_coord("f5") { p = t }
+        if let Ok(t) = parse_coord("f5") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("d6") { p = t }
+        if let Ok(t) = parse_coord("d6") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("c5") { p = t }
+        if let Ok(t) = parse_coord("c5") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("f4") { p = t }
+        if let Ok(t) = parse_coord("f4") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("e7") { p = t }
+        if let Ok(t) = parse_coord("e7") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("f6") { p = t }
+        if let Ok(t) = parse_coord("f6") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("g5") { p = t }
+        if let Ok(t) = parse_coord("g5") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("e6") { p = t }
+        if let Ok(t) = parse_coord("e6") {
+            p = t
+        }
         if let Ok((b, status)) = board.next(p) {
             assert_eq!(status, GameStatus::Ok);
             board = b
         }
-        if let Ok(t )= parse_coord("e3") { p = t }
+        if let Ok(t) = parse_coord("e3") {
+            p = t
+        }
         if let Ok((_, status)) = board.next(p) {
             assert_eq!(status, GameStatus::End);
         }
@@ -381,9 +438,7 @@ next: X
 
     #[test]
     fn test_next_state_pass() {
-        let moves = [
-            "f5", "f6", "d3", "g5", "h5", "h4", "f7", "h6"
-        ];
+        let moves = ["f5", "f6", "d3", "g5", "h5", "h4", "f7", "h6"];
         let exp = [
             GameStatus::Ok,
             GameStatus::Ok,
@@ -392,12 +447,14 @@ next: X
             GameStatus::Ok,
             GameStatus::Ok,
             GameStatus::Ok,
-            GameStatus::Pass
+            GameStatus::Pass,
         ];
         let mut board = Board::new();
         let mut p = 0;
         for (m, e) in moves.iter().zip(exp.iter()) {
-            if let Ok(t )= parse_coord(m) { p = t }
+            if let Ok(t) = parse_coord(m) {
+                p = t
+            }
             if let Ok((b, status)) = board.next(p) {
                 assert_eq!(status, *e);
                 board = b;
@@ -452,7 +509,10 @@ next: X
 next: X
 "#;
         let board = Board::parse(board_string);
-        assert_eq!(board.player, set_vertical_edge(get_vertical_edge(board.player)));
+        assert_eq!(
+            board.player,
+            set_vertical_edge(get_vertical_edge(board.player))
+        );
     }
 
     #[test]
@@ -502,7 +562,10 @@ next: X
 next: X
 "#;
         let board = Board::parse(board_string);
-        assert_eq!(board.player, set_diag_up_right_edge(get_diag_up_right_edge(board.player)));
+        assert_eq!(
+            board.player,
+            set_diag_up_right_edge(get_diag_up_right_edge(board.player))
+        );
     }
 
     #[test]
@@ -552,7 +615,9 @@ next: X
 next: X
 "#;
         let board = Board::parse(board_string);
-        assert_eq!(board.player, set_diag_up_left_edge(get_diag_up_left_edge(board.player)));
+        assert_eq!(
+            board.player,
+            set_diag_up_left_edge(get_diag_up_left_edge(board.player))
+        );
     }
 }
-

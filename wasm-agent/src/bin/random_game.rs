@@ -1,9 +1,14 @@
-use wasm_agent::{agent::{Agent, RandomAgent}, othello::{Board, GameStatus}};
-
+use wasm_agent::{
+    agent::{Agent, RandomAgent},
+    othello::{Board, GameStatus},
+};
 
 fn main() {
     let mut board = Board::new();
-    let mut agents = [RandomAgent::new(), RandomAgent::new()];
+    let mut agents = [
+        RandomAgent::new(rand::thread_rng()),
+        RandomAgent::new(rand::thread_rng()),
+    ];
 
     println!("{}", board);
 
@@ -17,7 +22,9 @@ fn main() {
                     break;
                 }
             }
-            Err(t) => { println!("{}", t); }
+            Err(t) => {
+                println!("{}", t);
+            }
         }
     }
 }
