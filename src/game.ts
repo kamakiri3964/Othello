@@ -20,8 +20,9 @@ import {
   flipable_all_places,
   Board_history,
   cancel_put,
-  add_board_history_turn,
+  add_board_history,
   deep_copy_board,
+  keep_next_state,
 } from './othello';
 
 export type Game = {
@@ -66,8 +67,10 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
+    game.black_player = 'user'
+    game.white_player = 'user'
     game.message_holder.innerText =
-      'お互い頑張ってください。' + '\n' + '黒の手番です。';
+      'お互い頑張ってください。' + '\n' + '黒の手番です。'+game.board_history+game.board_history.findIndex(element => element[0] === game.board);
   });
   select_black.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
@@ -77,6 +80,7 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
+    game.black_player = 'user'
     game.white_player = new_random_player()
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + 'あなた(黒)の手番です。';
@@ -90,6 +94,7 @@ export function put_start_button(
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
     game.black_player = new_random_player()
+    game.white_player = 'user'
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
   });
@@ -101,10 +106,10 @@ export function put_cancel_button(
 ): void {
   cancel_button.addEventListener('click', (e: MouseEvent) => {
     if(cancel_put(game.board, game.board_history)){
-      const new_board = game.board_history[game.board_history.length-1]
+      const new_board = game.board_history[game.board_history.length-1]![0]
       if(new_board !== undefined){
-        game.board = deep_copy_board(new_board)
         game.board_history.pop()
+        game.board = deep_copy_board(new_board)
         draw_board(game.board, game.canvas)
       }
     }
@@ -133,7 +138,7 @@ export function create_game(
     now_gaming: false,
     black_player: 'user',
     white_player: 'user',
-    board_history: [generate_initial_board()],
+    board_history: [[generate_initial_board(),Gamestatus.Ok]],
   };
   message_holder.innerText = '対戦相手、先攻後攻を選んでください。';
   game.start_button.style.display = 'inline';
@@ -170,7 +175,8 @@ function input_state(game: Game): boolean {
     game.user_input = null;
   }
   if (game.now_gaming && game.user_input !== null) {
-    const [board, status] = next_state(game.board, game.user_input, game.board_history);
+    keep_next_state(game.board, game.user_input, game.board_history)
+    const [board, status] = next_state(game.board, game.user_input);
     if (status === Gamestatus.Error) {
       return false;
     }
@@ -212,7 +218,7 @@ export function create_message(game: Game, status: Gamestatus): string {
   const board = game.board;
   const b_score = '黒： ' + calc_score(board)[0];
   const w_score = '白： ' + calc_score(board)[1];
-  const score = b_score + '\n' + w_score + '\n';
+  const score = b_score + '\n' + w_score + '\n'+game.board_history+'\n' +game.board_history.findIndex((element) => element[0] === generate_initial_board());
 
   if (status === Gamestatus.Ok) {
     if (board.black_turn) {

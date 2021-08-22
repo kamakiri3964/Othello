@@ -88,7 +88,7 @@ export type Board_history =[
 ]
 */
 
-export type Board_history = Board[]
+export type Board_history = [Board, Gamestatus][]
 
 //盤面初期化
 export function generate_initial_board(): Board {
@@ -168,7 +168,7 @@ export function calc_score(board: Board): [number, number] {
 export function put_stone(
   point: [number, number],
   black_turn: boolean,
-  board: Board, board_history: Board_history  
+  board: Board
 ) {
   const row_number = point[0];
   const column_number = point[1];
@@ -183,7 +183,6 @@ export function put_stone(
       !board.black[row_number]![column_number] &&
       !board.white[row_number]![column_number]
     ) {
-      add_board_history_turn(board, board_history)
       if (black_turn) {
         board.black[row_number]![column_number] = true;
       } else {
@@ -449,9 +448,8 @@ export enum Gamestatus {
 export function next_state(
   board: Board,
   p: [number, number],
-  board_history: Board_history,
 ): [Board, Gamestatus] {
-  if (is_valid_move(p, board) && put_stone(p, board.black_turn, board, board_history)) {
+  if (is_valid_move(p, board) && put_stone(p, board.black_turn, board)) {
     const can_flip_places = flipable_all_places(p, board);
     for (const elements of can_flip_places) {
       flip_stone(elements, board);
@@ -476,6 +474,35 @@ export function next_state(
   return [board, Gamestatus.Error];
 }
 
+//現在の盤面と次の着手が与えられて次の盤面をhistoryに保存する
+export function keep_next_state(
+  board: Readonly<Board>,
+  p: [number, number],
+  board_history: Board_history,
+):void{
+  let temporary_board = deep_copy_board(board)
+  if (is_valid_move(p, temporary_board) && put_stone(p, board.black_turn, temporary_board)) {
+//    deleat_lator_turn(board,board_history)
+    const can_flip_places = flipable_all_places(p, board);
+    for (const elements of can_flip_places) {
+      flip_stone(elements, temporary_board);
+    }
+    temporary_board = move_turn(temporary_board);
+    if (all_valid_moves(temporary_board).length > 0) {
+      add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Ok);
+    }
+
+    if (all_valid_moves(temporary_board).length === 0) {
+      temporary_board = move_turn(temporary_board);
+      if (all_valid_moves(temporary_board).length === 0) {
+        add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.End);
+      } else {
+        add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Pass);
+      }
+    }
+  }
+}
+
 export function deep_copy_board_array(
   board_array: Readonly<BoardArray>
 ): BoardArray {
@@ -490,19 +517,53 @@ export function deep_copy_board(board: Readonly<Board>): Board {
   };
 }
 
-export function add_board_history_turn(board:Readonly<Board>, board_history: Board_history):Board_history{
-  board_history.push(deep_copy_board(board));
+export function add_board_history(board:Readonly<Board>, board_history: Board_history,status:Gamestatus):Board_history{
+  board_history.push([deep_copy_board(board),status]);
   return board_history
 }
 
+//historyは消さずにboaedが1ターン戻る
+export function return_one_turn(board:Board, board_history: Board_history):Board{
+  const now_turn_count = board_history.indexOf([board,(Gamestatus.Ok | Gamestatus.Pass | Gamestatus.End)])
+  if(now_turn_count >= 1){
+    board = board_history[now_turn_count-1]![0]
+    return board
+  }
+  return board
+}
+
+//historyは消さずにboaedが1ターン進む
+export function next_one_turn(board:Board, board_history: Board_history):Board{
+  const now_turn_count = board_history.indexOf([board,(Gamestatus.Ok | Gamestatus.Pass | Gamestatus.End)])
+  if(now_turn_count < board_history.length){
+    board = board_history[now_turn_count+1]![0]
+    return board
+  }
+  return board
+}
+
+//そのboard以降のhistoryを消す
+export function deleat_lator_turn(board:Board, board_history: Board_history):Board_history{
+  const now_turn_count = board_history.indexOf([board,Gamestatus.Ok])
+  if(board_history.length > 1){
+    for (let i = 0; i < board_history.length-now_turn_count-1; i++) {
+      board_history.pop()    
+    }
+  }
+  return board_history
+}
+
+
 export function cancel_put(board:Board, board_history: Board_history):boolean{
-  let recent_board = board_history[board_history.length-1]
+  let recent_board = board_history[board_history.length-1]![0]
   if(recent_board === undefined || board_history.length<3){
     return false
   }
   if(board_history.length >= 3 && recent_board !== undefined){
     board_history.pop()
-    recent_board = board_history[board_history.length-1]
+    recent_board = board_history[board_history.length-1]![0]
   }
   return true
 }
+
+
