@@ -1,4 +1,5 @@
 pub mod othello;
+pub mod agent;
 
 use wasm_bindgen::prelude::*;
 
