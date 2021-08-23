@@ -1,6 +1,6 @@
 use std::io;
 
-use wasm_agent::othello::Board;
+use wasm_agent::othello::{lsb, Board};
 
 fn main() {
     let mut board_json = String::new();
@@ -11,13 +11,11 @@ fn main() {
         match serde_json::from_str::<Board>(&board_json) {
             Ok(board) => {
                 let mut flippable = Vec::<u64>::new();
-                let legal = board.legal();
-                const UPPER_LEFT: u64 = 0x8000_0000_0000_0000;
-                for i in 0..64 {
-                    if (legal << i) & UPPER_LEFT != 0 {
-                        let r = board.reverse(UPPER_LEFT >> i);
-                        flippable.push(r)
-                    }
+                let mut legal = board.legal();
+                while let Some(m) = lsb(legal) {
+                    let r = board.reverse(1 << m);
+                    flippable.push(r);
+                    legal ^= 1 << m;
                 }
                 println!("{}", serde_json::to_string(&flippable).unwrap());
             }

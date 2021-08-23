@@ -272,6 +272,21 @@ impl fmt::Display for Board {
     }
 }
 
+pub fn lsb(pos: u64) -> Option<usize> {
+    const DE_BUIJN_SEQ: u64 = 0x03F566ED27179461;
+    const POS_MAP: [usize; 64] = [
+        0, 1, 59, 2, 60, 40, 54, 3, 61, 32, 49, 41, 55, 19, 35, 4, 62, 52, 30, 33, 50, 12, 14, 42,
+        56, 16, 27, 20, 36, 23, 44, 5, 63, 58, 39, 53, 31, 48, 18, 34, 51, 29, 11, 13, 15, 26, 22,
+        43, 57, 38, 47, 17, 28, 10, 25, 21, 37, 46, 9, 24, 45, 8, 7, 6,
+    ];
+    if pos == 0 {
+        return None;
+    }
+    let v = pos & ((-(pos as i128)) as u64);
+    let h = ((v.wrapping_mul(DE_BUIJN_SEQ)) >> 58) as usize;
+    Some(POS_MAP[h])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -619,5 +634,18 @@ next: X
             board.player,
             set_diag_up_left_edge(get_diag_up_left_edge(board.player))
         );
+    }
+
+    #[test]
+    fn test_lsb() {
+        let x = 0x0000_0000_0000_0001;
+        for i in 0..64 {
+            assert_eq!(lsb(x << i), Some(i));
+        }
+        let x = 0xf820_4510_0af0_7eb1;
+        for i in 0..64 {
+            assert_eq!(lsb(x << i), Some(i));
+        }
+        assert_eq!(lsb(0), None);
     }
 }
