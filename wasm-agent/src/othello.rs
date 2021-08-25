@@ -11,7 +11,7 @@ pub enum GameStatus {
     End,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct Board {
     pub player: u64,
     pub opponent: u64,
@@ -110,24 +110,22 @@ impl Board {
         reverse
     }
 
-    pub fn put_uncheck(&self, pos: u64) -> (u64, u64) {
+    pub fn put_uncheck(&self, pos: u64) -> Self {
         let disc_to_flip = self.reverse(pos);
         let new_o = self.player | pos | disc_to_flip;
         let new_p = self.opponent ^ disc_to_flip;
-        (new_p, new_o)
+        Board {
+            player: new_p,
+            opponent: new_o,
+            is_player_black: !self.is_player_black,
+        }
     }
 
     pub fn put(&self, pos: u64) -> Result<Self, &str> {
         if !self.is_legal(pos) {
             return Err("illegal position to put");
         }
-
-        let (p, o) = self.put_uncheck(pos);
-        Ok(Board {
-            player: p,
-            opponent: o,
-            is_player_black: !self.is_player_black,
-        })
+        Ok(self.put_uncheck(pos))
     }
 
     pub fn next(&self, pos: u64) -> Result<(Self, GameStatus), &str> {
