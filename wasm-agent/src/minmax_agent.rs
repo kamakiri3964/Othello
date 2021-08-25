@@ -28,8 +28,8 @@ impl MinMaxAgent {
         }
         let mut max_v = i32::min_value();
         let mut first_hand = 0;
-        while let Some(m) = lsb(legal) {
-            let h = 1 << m;
+        let mut h = lsb(legal);
+        while h != 0 {
             let new_b = board.put_uncheck(h);
             let (_, v) = self.eval_by_search(new_b, depth-1);
             if max_v < -v {
@@ -37,6 +37,7 @@ impl MinMaxAgent {
                 first_hand = h;
             }
             legal ^= h;
+            h = lsb(legal);
         }
         (first_hand, max_v)
     }
