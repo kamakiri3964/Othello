@@ -55,7 +55,7 @@ impl Agent for MinMaxAgent {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{Duration, Instant};
+    use std::time::Instant;
 
     use super::*;
     #[test]
@@ -81,6 +81,5 @@ next: X
         agent.next(&board);
         let end = start.elapsed();
         eprintln!("{}.{:03}sec", end.as_secs(), end.subsec_nanos() / 1_000_000);
-        // assert!(end < Duration::from_millis(1000));
     }
 }
