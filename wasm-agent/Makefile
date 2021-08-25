@@ -13,6 +13,12 @@ $(DATADIR)/legal.jsonl: $(DATADIR)/random_boards.jsonl $(BINDIR)/generate_legal.
 $(DATADIR)/flippable.jsonl: $(DATADIR)/random_boards.jsonl $(BINDIR)/generate_flippable.rs $(SRCS)
 	cargo run --bin generate_flippable < $(DATADIR)/random_boards.jsonl > $(DATADIR)/flippable.jsonl
 
+profile.pb: $(SRCS)
+	cargo run --bin prof_agent --release
+
+profile: profile.pb
+	go tool pprof -http localhost:8080 profile.pb
+
 .PHONY: test
 test: $(SRCS) $(CONF)
 	cargo test

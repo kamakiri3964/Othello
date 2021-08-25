@@ -12,6 +12,8 @@ impl MinMaxAgent {
         MinMaxAgent { depth }
     }
 
+    /// Returns (next hand (u64), evaluation value (i32))
+    /// when depth is 0, returns (0, evaluation value (i32))
     fn eval_by_search(&self, board: Board, depth: usize) -> (u64, i32) {
         if depth == 0 {
             return (0, self.eval(board))

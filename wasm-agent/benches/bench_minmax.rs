@@ -1,4 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+// use pprof::criterion::{PProfProfiler, Output};
 use wasm_agent::othello::Board;
 use wasm_agent::minmax_agent::MinMaxAgent;
 use wasm_agent::agent::Agent;
@@ -23,5 +24,11 @@ next: X
     c.bench_function("min max", |b| b.iter(|| agent.next(black_box(&board))));
 }
 
+// not working...
+// criterion_group!{
+//     name = benches;
+//     config = Criterion::default().with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
+//     targets = criterion_benchmark
+// }
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
