@@ -479,28 +479,32 @@ export function keep_next_state(
   board: Readonly<Board>,
   p: [number, number],
   board_history: Board_history,
-):void{
+  turn_number: number
+):number{
   let temporary_board = deep_copy_board(board)
   if (is_valid_move(p, temporary_board) && put_stone(p, board.black_turn, temporary_board)) {
-//    deleat_lator_turn(board,board_history)
     const can_flip_places = flipable_all_places(p, board);
     for (const elements of can_flip_places) {
       flip_stone(elements, temporary_board);
     }
     temporary_board = move_turn(temporary_board);
     if (all_valid_moves(temporary_board).length > 0) {
-      add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Ok);
+      const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Ok, turn_number);
+      return put_number
     }
 
     if (all_valid_moves(temporary_board).length === 0) {
       temporary_board = move_turn(temporary_board);
       if (all_valid_moves(temporary_board).length === 0) {
-        add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.End);
+        const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.End, turn_number);
+        return put_number
       } else {
-        add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Pass);
+        const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Pass, turn_number);
+        return put_number;
       }
     }
   }
+  return turn_number
 }
 
 export function deep_copy_board_array(
@@ -517,53 +521,53 @@ export function deep_copy_board(board: Readonly<Board>): Board {
   };
 }
 
-export function add_board_history(board:Readonly<Board>, board_history: Board_history,status:Gamestatus):Board_history{
+export function add_board_history(board:Readonly<Board>, board_history: Board_history,status:Gamestatus, turn_number:number):number{
   board_history.push([deep_copy_board(board),status]);
-  return board_history
+  const put_turn_number = turn_number + 1;
+  return put_turn_number
 }
 
 //historyは消さずにboaedが1ターン戻る
-export function return_one_turn(board:Board, board_history: Board_history):Board{
-  const now_turn_count = board_history.indexOf([board,(Gamestatus.Ok | Gamestatus.Pass | Gamestatus.End)])
-  if(now_turn_count >= 1){
-    board = board_history[now_turn_count-1]![0]
+export function return_one_turn(board_history: Board_history, turn_number: number):Board{
+  if(turn_number >= 1){
+    const board = deep_copy_board(board_history[turn_number-1]![0])
+    turn_number = turn_number - 1
     return board
   }
-  return board
+  return deep_copy_board(board_history[turn_number]![0])
 }
 
 //historyは消さずにboaedが1ターン進む
-export function next_one_turn(board:Board, board_history: Board_history):Board{
-  const now_turn_count = board_history.indexOf([board,(Gamestatus.Ok | Gamestatus.Pass | Gamestatus.End)])
-  if(now_turn_count < board_history.length){
-    board = board_history[now_turn_count+1]![0]
+export function next_one_turn(board_history: Board_history,turn_number: number):Board{
+  if(turn_number < (board_history.length - 1)){
+    const board = deep_copy_board(board_history[turn_number+1]![0])
+    turn_number  ++;
     return board
   }
-  return board
+  return deep_copy_board(board_history[turn_number]![0])
 }
 
 //そのboard以降のhistoryを消す
-export function deleat_lator_turn(board:Board, board_history: Board_history):Board_history{
-  const now_turn_count = board_history.indexOf([board,Gamestatus.Ok])
+export function delete_lator_turn(board_history: Board_history, turn_number:number):Board_history{
   if(board_history.length > 1){
-    for (let i = 0; i < board_history.length-now_turn_count-1; i++) {
+    for (let i = 0; i < board_history.length-turn_number-1; i++) {
       board_history.pop()    
     }
+    return board_history
   }
   return board_history
 }
 
-
-export function cancel_put(board:Board, board_history: Board_history):boolean{
-  let recent_board = board_history[board_history.length-1]![0]
-  if(recent_board === undefined || board_history.length<3){
-    return false
+//前回のその色のターンまで戻る
+export function back_to_my_turn(board_history: Board_history, turn_number:number):[Board, number]{
+  if(turn_number > 1){
+    let temporary_turn_number = 1 * turn_number
+    const now_board = deep_copy_board(board_history[temporary_turn_number]![0])
+    let  temporary_board = return_one_turn(board_history, temporary_turn_number)
+    while(now_board.black_turn !== temporary_board.black_turn){
+      temporary_board = return_one_turn(board_history, temporary_turn_number)
+    }
+    return [temporary_board, temporary_turn_number]
   }
-  if(board_history.length >= 3 && recent_board !== undefined){
-    board_history.pop()
-    recent_board = board_history[board_history.length-1]![0]
-  }
-  return true
+  return [deep_copy_board(board_history[turn_number]![0]), turn_number]
 }
-
-

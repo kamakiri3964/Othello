@@ -19,10 +19,12 @@ import {
   Gamestatus,
   flipable_all_places,
   Board_history,
-  cancel_put,
   add_board_history,
   deep_copy_board,
   keep_next_state,
+  delete_lator_turn,
+  deep_copy_board_array,
+  back_to_my_turn,
 } from './othello';
 
 export type Game = {
@@ -40,6 +42,7 @@ export type Game = {
   black_player: AIAgent | 'user';
   white_player: AIAgent | 'user';
   board_history: Board_history;
+  turn_number: number;
 };
 
 export function register_mouse_input_listner(game: Game): void {
@@ -70,7 +73,7 @@ export function put_start_button(
     game.black_player = 'user'
     game.white_player = 'user'
     game.message_holder.innerText =
-      'お互い頑張ってください。' + '\n' + '黒の手番です。'+game.board_history+game.board_history.findIndex(element => element[0] === game.board);
+      'お互い頑張ってください。' + '\n' + '黒の手番です。'+game.board_history+game.turn_number
   });
   select_black.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
@@ -105,14 +108,8 @@ export function put_cancel_button(
   cancel_button: HTMLButtonElement
 ): void {
   cancel_button.addEventListener('click', (e: MouseEvent) => {
-    if(cancel_put(game.board, game.board_history)){
-      const new_board = game.board_history[game.board_history.length-1]![0]
-      if(new_board !== undefined){
-        game.board_history.pop()
-        game.board = deep_copy_board(new_board)
-        draw_board(game.board, game.canvas)
-      }
-    }
+    [game.board, game.turn_number] = back_to_my_turn(game.board_history, game.turn_number)
+    draw_board(game.board, game.canvas);
   });
 }
 
@@ -139,6 +136,7 @@ export function create_game(
     black_player: 'user',
     white_player: 'user',
     board_history: [[generate_initial_board(),Gamestatus.Ok]],
+    turn_number: 0
   };
   message_holder.innerText = '対戦相手、先攻後攻を選んでください。';
   game.start_button.style.display = 'inline';
@@ -175,7 +173,8 @@ function input_state(game: Game): boolean {
     game.user_input = null;
   }
   if (game.now_gaming && game.user_input !== null) {
-    keep_next_state(game.board, game.user_input, game.board_history)
+    game.turn_number = keep_next_state(game.board, game.user_input, game.board_history, game.turn_number)
+    game.board_history = delete_lator_turn(game.board_history, game.turn_number)
     const [board, status] = next_state(game.board, game.user_input);
     if (status === Gamestatus.Error) {
       return false;
@@ -218,7 +217,7 @@ export function create_message(game: Game, status: Gamestatus): string {
   const board = game.board;
   const b_score = '黒： ' + calc_score(board)[0];
   const w_score = '白： ' + calc_score(board)[1];
-  const score = b_score + '\n' + w_score + '\n'+game.board_history+'\n' +game.board_history.findIndex((element) => element[0] === generate_initial_board());
+  const score = b_score + '\n' + w_score + '\n'+game.board_history+'\n' +game.turn_number;
 
   if (status === Gamestatus.Ok) {
     if (board.black_turn) {
