@@ -50,8 +50,11 @@ fn criterion_benchmark(c: &mut Criterion) {
         }
         flippable.push(f);
     }
-    for (exp, act) in expected.iter().zip(flippable.iter()) {
-        for (&e, &a) in exp.iter().zip(act.iter()) {
+    for (i, (exp, act)) in expected.iter().zip(flippable.iter()).enumerate() {
+        for (j, (&e, &a)) in exp.iter().zip(act.iter()).enumerate() {
+            if e != a {
+                eprintln!("i: {}, j: {}", i, j);
+            }
             assert_eq!(e, a);
         }
     }

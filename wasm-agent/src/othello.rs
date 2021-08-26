@@ -4,6 +4,8 @@ use std::{
     ops::{Shl, Shr},
 };
 
+use crate::reverse::reverse;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum GameStatus {
     Ok,
@@ -86,28 +88,29 @@ impl Board {
     }
 
     pub fn reverse(&self, pos: u64) -> u64 {
-        let n_shifts_and_masks = [
-            (1u64, 0x7e7e7e7e7e7e7e7e), // right / left
-            (7u64, 0x007e7e7e7e7e7e00), // down left / up right
-            (8u64, 0x00ffffffffffff00), // down / up
-            (9u64, 0x007e7e7e7e7e7e00), // down right / up left
-        ];
-        let d_shifts = [Shl::shl, Shr::shr];
-        let mut reverse = 0;
-        for (n_shifts, mask) in n_shifts_and_masks.iter() {
-            for shift in d_shifts.iter() {
-                let mut r = 0;
-                let mut p = shift(pos, n_shifts);
-                while p & mask & self.opponent != 0u64 {
-                    r |= p;
-                    p = shift(p, n_shifts);
-                }
-                if p & self.player != 0u64 {
-                    reverse |= r;
-                }
-            }
-        }
-        reverse
+        reverse(self.player, self.opponent, pos)
+        // let n_shifts_and_masks = [
+        //     (1u64, 0x7e7e7e7e7e7e7e7e), // right / left
+        //     (7u64, 0x007e7e7e7e7e7e00), // down left / up right
+        //     (8u64, 0x00ffffffffffff00), // down / up
+        //     (9u64, 0x007e7e7e7e7e7e00), // down right / up left
+        // ];
+        // let d_shifts = [Shl::shl, Shr::shr];
+        // let mut reverse = 0;
+        // for (n_shifts, mask) in n_shifts_and_masks.iter() {
+        //     for shift in d_shifts.iter() {
+        //         let mut r = 0;
+        //         let mut p = shift(pos, n_shifts);
+        //         while p & mask & self.opponent != 0u64 {
+        //             r |= p;
+        //             p = shift(p, n_shifts);
+        //         }
+        //         if p & self.player != 0u64 {
+        //             reverse |= r;
+        //         }
+        //     }
+        // }
+        // reverse
     }
 
     pub fn put_uncheck(&self, pos: u64) -> Self {
@@ -211,33 +214,6 @@ pub fn parse_coord(s: &str) -> Result<u64, &str> {
         _ => return Err("invalid coordition format"),
     }
     Ok(c)
-}
-
-pub fn get_vertical_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0102_0408_1020_4080) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
-}
-
-pub fn set_vertical_edge(edge: u8) -> u64 {
-    (((edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x8040_2010_0804_0201)
-        .wrapping_mul(0x0000_0000_0000_00ff)
-        >> 7)
-        & 0x0101_0101_0101_0101
-}
-
-pub fn get_diag_up_right_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
-}
-
-pub fn set_diag_up_right_edge(edge: u8) -> u64 {
-    (edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x0102_0408_1020_4080
-}
-
-pub fn get_diag_up_left_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
-}
-
-pub fn set_diag_up_left_edge(edge: u8) -> u64 {
-    (edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x8040_2010_0804_0201
 }
 
 impl fmt::Display for Board {
@@ -478,165 +454,6 @@ next: X
                 board = b;
             }
         }
-    }
-
-    #[test]
-    fn test_get_vertical_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | | |X|
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | |X|
-6 | | | | | | | |X|
-7 | | | | | | | | |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let mut board = Board::parse(board_string);
-        board.player = get_vertical_edge(board.player) as u64;
-        let rotated_string = r#"   A B C D E F G H
-1 | | | | | | | | |
-2 | | | | | | | | |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | | | |
-8 |X|X| | |X|X| |X|
-
-next: X
-"#;
-        let expected = Board::parse(rotated_string);
-        assert_eq!(board, expected);
-    }
-
-    #[test]
-    fn test_set_vertical_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | | |X|
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | |X|
-6 | | | | | | | |X|
-7 | | | | | | | | |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let board = Board::parse(board_string);
-        assert_eq!(
-            board.player,
-            set_vertical_edge(get_vertical_edge(board.player))
-        );
-    }
-
-    #[test]
-    fn test_get_diag_up_right_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | |X| |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | |X| | | | |
-6 | | |X| | | | | |
-7 | | | | | | | | |
-8 |X| | | | | | | |
-
-next: X
-"#;
-        let mut board = Board::parse(board_string);
-        board.player = get_diag_up_right_edge(board.player) as u64;
-        let rotated_string = r#"   A B C D E F G H
-1 | | | | | | | | |
-2 | | | | | | | | |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | | | |
-8 |X| |X|X| | |X|X|
-
-next: X
-"#;
-        let expected = Board::parse(rotated_string);
-        assert_eq!(board, expected);
-    }
-
-    #[test]
-    fn test_set_diag_up_right_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | |X| |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | |X| | | | |
-6 | | |X| | | | | |
-7 | | | | | | | | |
-8 |X| | | | | | | |
-
-next: X
-"#;
-        let board = Board::parse(board_string);
-        assert_eq!(
-            board.player,
-            set_diag_up_right_edge(get_diag_up_right_edge(board.player))
-        );
-    }
-
-    #[test]
-    fn test_get_diag_up_left_edge() {
-        let board_string = r#"   A B C D E F G H
-1 |X| | | | | | | |
-2 | | | | | | | | |
-3 | | |X| | | | | |
-4 | | | |X| | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | |X| |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let mut board = Board::parse(board_string);
-        board.player = get_diag_up_left_edge(board.player) as u64;
-        let rotated_string = r#"   A B C D E F G H
-1 | | | | | | | | |
-2 | | | | | | | | |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | | | |
-8 |X| |X|X| | |X|X|
-
-next: X
-"#;
-        let expected = Board::parse(rotated_string);
-        assert_eq!(board, expected);
-    }
-
-    #[test]
-    fn test_set_diag_up_left_edge() {
-        let board_string = r#"   A B C D E F G H
-1 |X| | | | | | | |
-2 | | | | | | | | |
-3 | | |X| | | | | |
-4 | | | |X| | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | |X| |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let board = Board::parse(board_string);
-        assert_eq!(
-            board.player,
-            set_diag_up_left_edge(get_diag_up_left_edge(board.player))
-        );
     }
 
     #[test]
