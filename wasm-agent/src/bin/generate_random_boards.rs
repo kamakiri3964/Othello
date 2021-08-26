@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use rand::SeedableRng;
 use wasm_agent::{
     agent::{Agent, RandomAgent},
     othello::{Board, GameStatus},
@@ -17,7 +18,8 @@ fn main() {
     let serialized = serde_json::to_string(&board).unwrap();
     println!("{}", serialized);
     let n = 1000;
-    let mut agent = RandomAgent::new(rand::thread_rng());
+    //let mut agent = RandomAgent::new(rand::thread_rng());
+    let mut agent = RandomAgent::new(rand_xoshiro::Xoshiro256StarStar::seed_from_u64(123));
     for _ in 0..n {
         let p = agent.next(&board);
         match board.next(p) {
