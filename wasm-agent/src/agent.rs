@@ -1,4 +1,4 @@
-use crate::othello::{Board, lsb};
+use crate::othello::{lsb, Board};
 use rand::Rng;
 
 pub trait Agent {
@@ -29,8 +29,8 @@ where
         let i = self.rng.gen_range(0..legal.count_ones());
         let mut h = lsb(legal);
         for _ in 0..i {
-          legal ^= h;
-          h = lsb(legal);
+            legal ^= h;
+            h = lsb(legal);
         }
         h
     }

@@ -1,6 +1,6 @@
 use std::io;
 
-use wasm_agent::othello::{Board, lsb};
+use wasm_agent::othello::{lsb, Board};
 
 fn main() {
     let mut board_json = String::new();

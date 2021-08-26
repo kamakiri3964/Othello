@@ -1,8 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 // use pprof::criterion::{PProfProfiler, Output};
-use wasm_agent::othello::Board;
-use wasm_agent::minmax_agent::MinMaxAgent;
 use wasm_agent::agent::Agent;
+use wasm_agent::minmax_agent::MinMaxAgent;
+use wasm_agent::othello::Board;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let depth = 8;

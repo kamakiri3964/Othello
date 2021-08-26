@@ -1,7 +1,9 @@
 use std::convert::TryInto;
 
-use crate::{agent::Agent, othello::{Board, lsb}};
-
+use crate::{
+    agent::Agent,
+    othello::{lsb, Board},
+};
 
 pub struct MinMaxAgent {
     depth: usize,
@@ -16,7 +18,7 @@ impl MinMaxAgent {
     /// when depth is 0, returns (0, evaluation value (i32))
     fn eval_by_search(&self, board: Board, depth: usize) -> (u64, i32) {
         if depth == 0 {
-            return (0, self.eval(board))
+            return (0, self.eval(board));
         }
         let mut legal = board.legal();
         if legal == 0 {
@@ -25,7 +27,7 @@ impl MinMaxAgent {
                 opponent: board.player,
                 is_player_black: !board.is_player_black,
             };
-            let (_, v) = self.eval_by_search(new_b, depth-1);
+            let (_, v) = self.eval_by_search(new_b, depth - 1);
             return (0, -v);
         }
         let mut max_v = i32::min_value();
@@ -33,7 +35,7 @@ impl MinMaxAgent {
         let mut h = lsb(legal);
         while h != 0 {
             let new_b = board.put_uncheck(h);
-            let (_, v) = self.eval_by_search(new_b, depth-1);
+            let (_, v) = self.eval_by_search(new_b, depth - 1);
             if max_v < -v {
                 max_v = -v;
                 first_hand = h;

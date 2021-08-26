@@ -1,6 +1,6 @@
 pub mod agent;
-pub mod othello;
 pub mod minmax_agent;
+pub mod othello;
 
 use wasm_bindgen::prelude::*;
 

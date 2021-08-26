@@ -28,11 +28,11 @@ next: X
         Ok(report) => {
             let mut file = File::create("profile.pb").unwrap();
             let profile = report.pprof().unwrap();
-    
+
             let mut content = Vec::new();
             profile.encode(&mut content).unwrap();
             file.write_all(&content).unwrap();
-    
+
             println!("report: {:?}", &report);
         }
         Err(_) => {}
