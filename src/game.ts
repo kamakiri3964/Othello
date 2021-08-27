@@ -1,6 +1,6 @@
 import { basename } from 'path/posix';
 import { getSystemErrorMap } from 'util';
-import { AIAgent, new_random_player } from './ai';
+import { AIAgent, minimax_2turn_stone_count_agent, new_random_player, new_weak_agent } from './ai';
 import { draw_board, draw_pieces, input_convert_place } from './drawer';
 import {
   Board,
@@ -87,7 +87,7 @@ export function put_start_button(
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
     game.black_player = 'user';
-    game.white_player = new_random_player();
+    game.white_player = minimax_2turn_stone_count_agent();
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + 'あなた(黒)の手番です。';
   });
@@ -99,7 +99,7 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
-    game.black_player = new_random_player();
+    game.black_player = minimax_2turn_stone_count_agent();
     game.white_player = 'user';
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
@@ -289,3 +289,7 @@ export function create_message(game: Game, status: Gamestatus): string {
   }
   return 'バグ';
 }
+function weak_agent_move(): AIAgent | "user" {
+  throw new Error('Function not implemented.');
+}
+
