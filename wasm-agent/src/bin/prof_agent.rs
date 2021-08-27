@@ -1,7 +1,7 @@
 use std::{fs::File, io::Write, time::Instant};
 
 use pprof::protos::Message;
-use wasm_agent::{agent::Agent, minmax_agent::MinMaxAgent, othello::Board};
+use wasm_agent::{agent::Agent, minmax_agent::MinMaxAgent, othello::Board, reverse::init_reverse};
 
 fn main() {
     let depth = 9;
@@ -20,6 +20,7 @@ next: X
 "#;
     // let board = Board::new();
     let board = Board::parse(board_string);
+    init_reverse();
 
     let start = Instant::now();
     let guard = pprof::ProfilerGuard::new(100).unwrap();

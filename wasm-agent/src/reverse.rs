@@ -1,5 +1,22 @@
+use once_cell::sync::Lazy;
 
-pub fn outflank(pos: u8, opp: u8) -> u8 {
+pub fn init_reverse() {
+    outflank(1, 0);
+    flipped(0);
+}
+
+fn new_outflank() -> [[u8; 1<<8]; 8] {
+    let mut outflank: [[u8; 1<<8]; 8] = [[0; 1<<8]; 8];
+    for i in 0..8 {
+        let pos = 1 << i;
+        for opp in 0..(1u16<<8) {
+            outflank[i][opp as usize] = calc_outflank(pos, opp as u8);
+        }
+    }
+    outflank
+}
+
+fn calc_outflank(pos: u8, opp: u8) -> u8 {
     let mut ret = 0;
     let mut p = pos;
     p = p << 1;
@@ -20,7 +37,20 @@ pub fn outflank(pos: u8, opp: u8) -> u8 {
     ret
 }
 
-pub fn flipped(of: u8) -> u8 {
+pub fn outflank(pos: u8, opp: u8) -> u8 {
+    static OUTFLANK: Lazy<[[u8; 1<<8]; 8]> = Lazy::new(new_outflank);
+    OUTFLANK[pos.trailing_zeros() as usize][opp as usize]
+}
+
+fn new_flipped() -> [u8; 1<<8] {
+    let mut flipped: [u8; 1<<8] = [0; 1<<8];
+    for of in 0..(1u16<<8) {
+        flipped[of as usize] = calc_flipped(of as u8);
+    }
+    flipped
+}
+
+pub fn calc_flipped(of: u8) -> u8 {
     let mut ret = 0;
     let mut b = of & ((-(of as i16)) as u8);
     b = b << 1;
@@ -35,6 +65,11 @@ pub fn flipped(of: u8) -> u8 {
         b = b << 1;
     }
     ret
+}
+
+pub fn flipped(of: u8) -> u8 {
+    static FLIPPED: Lazy<[u8; 1<<8]> = Lazy::new(new_flipped);
+    FLIPPED[of as usize]
 }
 
 pub fn reverse(player: u64, opponent: u64, pos: u64) -> u64 {
