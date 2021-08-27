@@ -39,7 +39,14 @@ const main = () => {
   start_button.style.display = 'none';
   cancel_button.style.display = 'none';
 
-  const game = create_game(canvas, message_holder, start_button, cancel_button, select_black, select_white);
+  const game = create_game(
+    canvas,
+    message_holder,
+    start_button,
+    cancel_button,
+    select_black,
+    select_white
+  );
   put_cancel_button(game, game.cancel_button);
   draw_board(game.board, canvas);
   start_loop(game, canvas);

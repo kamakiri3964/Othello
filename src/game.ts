@@ -1,4 +1,5 @@
 import { basename } from 'path/posix';
+import { getSystemErrorMap } from 'util';
 import { AIAgent, new_random_player } from './ai';
 import { draw_board, draw_pieces, input_convert_place } from './drawer';
 import {
@@ -21,10 +22,10 @@ import {
   Board_history,
   add_board_history,
   deep_copy_board,
-  keep_next_state,
-  delete_lator_turn,
+  delete_later_turn,
   deep_copy_board_array,
   back_to_my_turn,
+  update_history,
 } from './othello';
 
 export type Game = {
@@ -70,10 +71,14 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
-    game.black_player = 'user'
-    game.white_player = 'user'
+    game.black_player = 'user';
+    game.white_player = 'user';
     game.message_holder.innerText =
-      'お互い頑張ってください。' + '\n' + '黒の手番です。'+game.board_history+game.turn_number
+      'お互い頑張ってください。' +
+      '\n' +
+      '黒の手番です。' +
+      game.board_history +
+      game.turn_number;
   });
   select_black.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
@@ -83,8 +88,8 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
-    game.black_player = 'user'
-    game.white_player = new_random_player()
+    game.black_player = 'user';
+    game.white_player = new_random_player();
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + 'あなた(黒)の手番です。';
   });
@@ -96,8 +101,8 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
-    game.black_player = new_random_player()
-    game.white_player = 'user'
+    game.black_player = new_random_player();
+    game.white_player = 'user';
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
   });
@@ -108,7 +113,9 @@ export function put_cancel_button(
   cancel_button: HTMLButtonElement
 ): void {
   cancel_button.addEventListener('click', (e: MouseEvent) => {
-    [game.board, game.turn_number] = back_to_my_turn(game.board_history, game.turn_number)
+    game.turn_number = back_to_my_turn(game.board_history, game.turn_number);
+    const board = game.board_history[game.turn_number]![0];
+    game.board = board;
     draw_board(game.board, game.canvas);
   });
 }
@@ -123,7 +130,7 @@ export function create_game(
 ): Game {
   const game: Game = {
     last: performance.now(),
-    interval: 1000/60, // ms
+    interval: 1000 / 60, // ms
     board: generate_initial_board(),
     canvas: canvas,
     user_input: null,
@@ -135,15 +142,21 @@ export function create_game(
     now_gaming: false,
     black_player: 'user',
     white_player: 'user',
-    board_history: [[generate_initial_board(),Gamestatus.Ok]],
-    turn_number: 0
+    board_history: [[generate_initial_board(), Gamestatus.Ok]],
+    turn_number: 0,
   };
   message_holder.innerText = '対戦相手、先攻後攻を選んでください。';
   game.start_button.style.display = 'inline';
   game.select_black.style.display = 'inline';
   game.select_white.style.display = 'inline';
   register_mouse_input_listner(game);
-  put_start_button(game, game.start_button, game.cancel_button, game.select_black, game.select_white);
+  put_start_button(
+    game,
+    game.start_button,
+    game.cancel_button,
+    game.select_black,
+    game.select_white
+  );
   return game;
 }
 
@@ -171,11 +184,17 @@ function update_state(game: Game): boolean {
 function input_state(game: Game): boolean {
   if (!game.now_gaming && game.user_input !== null) {
     game.user_input = null;
+    return false;
   }
   if (game.now_gaming && game.user_input !== null) {
-    game.turn_number = keep_next_state(game.board, game.user_input, game.board_history, game.turn_number)
-    game.board_history = delete_lator_turn(game.board_history, game.turn_number)
+    game.turn_number = update_history(
+      game.board_history,
+      game.turn_number,
+      game.user_input
+    );
     const [board, status] = next_state(game.board, game.user_input);
+    game.user_input = null;
+    game.board = board;
     if (status === Gamestatus.Error) {
       return false;
     }
@@ -217,7 +236,14 @@ export function create_message(game: Game, status: Gamestatus): string {
   const board = game.board;
   const b_score = '黒： ' + calc_score(board)[0];
   const w_score = '白： ' + calc_score(board)[1];
-  const score = b_score + '\n' + w_score + '\n'+game.board_history+'\n' +game.turn_number;
+  const score =
+    b_score +
+    '\n' +
+    w_score +
+    '\n' +
+    game.board_history +
+    '\n' +
+    game.turn_number;
 
   if (status === Gamestatus.Ok) {
     if (board.black_turn) {

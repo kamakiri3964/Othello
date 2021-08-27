@@ -17,7 +17,6 @@ import {
   Gamestatus,
 } from './othello';
 
-
 export function convert_vec(
   x: number,
   y: number,
@@ -107,7 +106,7 @@ export function draw_piece(
 export function draw_can_put_place(
   i: number,
   j: number,
-  canvas: HTMLCanvasElement,
+  canvas: HTMLCanvasElement
 ): void {
   const ctx = canvas.getContext('2d');
   //    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -146,8 +145,8 @@ export function draw_board(board: Board, canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext('2d');
   const field_size = [
     document.body.clientWidth,
-    window.innerHeight-100,
-    600
+    window.innerHeight - 100,
+    600,
   ].reduce((a, b) => Math.min(a, b));
   canvas.height = field_size;
   canvas.width = field_size;
@@ -160,7 +159,9 @@ export function draw_board(board: Board, canvas: HTMLCanvasElement): void {
   }
   draw_grid(canvas);
   draw_pieces(board, canvas);
-  all_valid_moves(board).forEach(function(element){draw_can_put_place(element[0], element[1], canvas)})
+  all_valid_moves(board).forEach(function (element) {
+    draw_can_put_place(element[0], element[1], canvas);
+  });
 }
 
 export function input_convert_place(
