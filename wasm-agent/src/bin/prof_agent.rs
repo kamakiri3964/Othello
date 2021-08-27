@@ -1,10 +1,10 @@
 use std::{fs::File, io::Write, time::Instant};
 
 use pprof::protos::Message;
-use wasm_agent::{agent::Agent, minmax_agent::MinMaxAgent, othello::Board, reverse::init_reverse};
+use wasm_agent::{agent::Agent, minmax_agent::{MinMaxAgent, n_search}, othello::Board, reverse::init_reverse};
 
 fn main() {
-    let depth = 9;
+    let depth = 8;
     let mut agent = MinMaxAgent::new(depth);
     let board_string = r#"   A B C D E F G H
 1 |O|O|O|O|O|O|O| |
@@ -40,4 +40,5 @@ next: X
     };
     let end = start.elapsed();
     eprintln!("{}.{:03}sec", end.as_secs(), end.subsec_nanos() / 1_000_000);
+    eprintln!("{}boards", n_search());
 }

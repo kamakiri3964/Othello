@@ -163,7 +163,7 @@ pub fn set_diag_up_left_edge(edge: u8) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::othello::{Board, lsb};
+    use crate::othello::{Board};
 
     use super::*;
     #[test]
@@ -477,26 +477,4 @@ next: X
             set_diag_up_left_edge(get_diag_up_left_edge(board.player))
         );
     }
-
-    // #[test]
-    // fn tmp() {
-    //     let s = r#"{"player":283734231432964,"opponent":7376009735438353,"is_player_black":false}"#;
-
-    //     if let Ok(board) = serde_json::from_str::<Board>(&s) {
-    //         let mut legal = board.legal();
-    //         let mut h = lsb(legal);
-    //         for _ in 0..5 {
-    //             legal ^= h;
-    //             h = lsb(legal);
-    //         }
-    //         assert_eq!(board.reverse(h), 481036337152);
-    //         let b = Board{
-    //             player: h,
-    //             opponent: board.reverse(h),
-    //             is_player_black: true
-    //         };
-    //         eprintln!("{}", board);
-    //         eprintln!("{}", b);
-    //     }
-    // }
 }

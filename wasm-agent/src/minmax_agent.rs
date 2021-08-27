@@ -5,6 +5,14 @@ use crate::{
     othello::{lsb, Board},
 };
 
+pub fn n_search() -> u128 {
+    static mut N_SEARCH: u128 = 0;
+    unsafe {
+        N_SEARCH += 1;
+        N_SEARCH
+    }
+}
+
 pub struct MinMaxAgent {
     depth: usize,
 }
@@ -17,6 +25,7 @@ impl MinMaxAgent {
     /// Returns (next hand (u64), evaluation value (i32))
     /// when depth is 0, returns (0, evaluation value (i32))
     fn eval_by_search(&self, board: Board, depth: usize) -> (u64, i32) {
+        n_search();
         if depth == 0 {
             return (0, self.eval(board));
         }
