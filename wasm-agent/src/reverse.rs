@@ -1,5 +1,19 @@
 use once_cell::sync::Lazy;
 
+pub enum Direction {
+    LeftRight,
+    UpDown,
+    UpperLeftLowerRight,
+    UpperRightLowerLeft
+}
+
+static DIRECTIONS: [Direction; 4] = [
+    Direction::LeftRight,
+    Direction::UpDown,
+    Direction::UpperLeftLowerRight,
+    Direction::UpperRightLowerLeft,
+];
+
 pub fn init_reverse() {
     outflank(1, 0);
     flipped(0);
@@ -87,7 +101,7 @@ pub fn reverse(player: u64, opponent: u64, pos: u64) -> u64 {
     ret
 }
 
-pub fn extruct_line(b: u64, x: u32, y: u32, d: usize) -> u8 {
+pub fn extruct_line2(b: u64, x: u32, y: u32, d: usize) -> u8 {
     let f = [
         get_horizontal_edge,
         get_vertical_edge,
@@ -107,6 +121,56 @@ pub fn extruct_line(b: u64, x: u32, y: u32, d: usize) -> u8 {
         0x0102_0408_1020_4080
     ];
     f[d](s[d](b, x, y)&masks[d])
+}
+
+fn new_mask() -> [[[u64; 4]; 8]; 8] {
+    let mut mask: [[[u64; 4]; 8]; 8] = [[[0; 4]; 8]; 8];
+    let mut m = 0x0000_0000_0000_00ff;
+    for x in 0..8 {
+        for y in 0..8 {
+            mask[x][y][0] = m;
+        }
+        m <<= 8;
+    }
+    let mut m = 0x0101_0101_0101_0101;
+    for y in 0..8 {
+        for x in 0..8 {
+            mask[x][y][0] = m;
+        }
+        m <<= 1;
+    }
+    let m = 0x8040_2010_0804_0201;
+    for y in 0..8 {
+        for x in 0..8 {
+            mask[x][y][0] = if x < y { m >> (8*(y - x)) } else { m << (8*(x - y))};
+        }
+    }
+    let m = 0x0102_0408_1020_4080;
+    for y in 0..8 {
+        for x in 0..8 {
+            mask[x][y][0] = if x+y > 7 { m << (8*((y + x) - 7)) } else { m >> (8*(7 - (x + y)))};
+        }
+    }
+    mask
+}
+
+pub fn extruct_line(b: u64, x: u32, y: u32, d: usize) -> u8 {
+    static MASK: Lazy<[[[u64; 4]; 8]; 8]> = Lazy::new(new_mask);
+    match d {
+        0 => {
+            (b & MASK[x as usize][y as usize][d] >> (8 * x) ) as u8
+        },
+        1 => {
+            ((b & MASK[x as usize][y as usize][d] >> y).wrapping_mul(0x0102_0408_1020_4080) >> (8 * 7)) as u8
+        },
+        2 => {
+            ((b & MASK[x as usize][y as usize][d]).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
+        },
+        3 => {
+            ((b & MASK[x as usize][y as usize][d]).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
+        },
+        _ => { panic!("direction(d) should be 0-4") }
+    }
 }
 
 pub fn inv_extruct_line(l: u8, x: u32, y: u32, d: usize) -> u64 {
