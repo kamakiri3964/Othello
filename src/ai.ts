@@ -56,7 +56,7 @@ export function minimax_2turn_stone_count_agent(): AIAgent {
 }
 
 function minimax_2turn_stone_count_move(board: Readonly<Board>):[number, number]{
-  const score = eval_by_search(board,6)
+  const score = eval_by_search(board,4)
   return score[1]
 }
 
