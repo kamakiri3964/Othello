@@ -1,4 +1,4 @@
-/*
+
 import { createInterface } from 'readline';
 import {
   Board,
@@ -97,4 +97,4 @@ const main = () => {
 
 main();
 
-*/
+
