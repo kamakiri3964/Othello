@@ -6,7 +6,7 @@ module.exports = {
     index: path.join(__dirname, 'src/index.ts'),
   },
   output: {
-    path: path.join(__dirname, 'dist'),
+    path: path.join(__dirname, 'docs'),
   },
   module: {
     rules: [
@@ -20,7 +20,7 @@ module.exports = {
   mode: process.env.NODE_ENV || "development",
   devtool: 'inline-source-map',
   devServer: {
-    contentBase: path.join(__dirname, 'dist')
+    contentBase: path.join(__dirname, 'docs')
   },
   plugins: [
     new HtmlWebpackPlugin({
