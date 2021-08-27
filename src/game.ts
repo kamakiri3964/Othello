@@ -76,9 +76,7 @@ export function put_start_button(
     game.message_holder.innerText =
       'お互い頑張ってください。' +
       '\n' +
-      '黒の手番です。' +
-      game.board_history +
-      game.turn_number;
+      '黒の手番です。' 
   });
   select_black.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
@@ -240,11 +238,7 @@ export function create_message(game: Game, status: Gamestatus): string {
     b_score +
     '\n' +
     w_score +
-    '\n' +
-    game.board_history +
-    '\n' +
-    game.turn_number;
-
+    '\n'
   if (status === Gamestatus.Ok) {
     if (board.black_turn) {
       return score + '黒の手番です';
