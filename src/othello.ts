@@ -19,8 +19,6 @@ export type Board = {
 
 //export type Board_history = new Array(64).fill(Board)
 
-
-
 export type Board_history = [Board, Gamestatus][];
 
 //盤面初期化

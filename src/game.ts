@@ -1,6 +1,12 @@
 import { basename } from 'path/posix';
 import { getSystemErrorMap } from 'util';
-import { AIAgent, minimax_2turn_stone_count_agent, new_random_player, new_weak_agent } from './ai';
+import {
+  AIAgent,
+  alphabeta_stone_count_agent,
+  minimax_stone_count_agent,
+  new_random_player,
+  new_weak_agent,
+} from './ai';
 import { draw_board, draw_pieces, input_convert_place } from './drawer';
 import {
   Board,
@@ -74,9 +80,7 @@ export function put_start_button(
     game.black_player = 'user';
     game.white_player = 'user';
     game.message_holder.innerText =
-      'お互い頑張ってください。' +
-      '\n' +
-      '黒の手番です。' 
+      'お互い頑張ってください。' + '\n' + '黒の手番です。';
   });
   select_black.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
@@ -87,7 +91,7 @@ export function put_start_button(
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
     game.black_player = 'user';
-    game.white_player = minimax_2turn_stone_count_agent();
+    game.white_player = alphabeta_stone_count_agent();
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + 'あなた(黒)の手番です。';
   });
@@ -99,7 +103,7 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
-    game.black_player = minimax_2turn_stone_count_agent();
+    game.black_player = alphabeta_stone_count_agent();
     game.white_player = 'user';
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
@@ -234,11 +238,7 @@ export function create_message(game: Game, status: Gamestatus): string {
   const board = game.board;
   const b_score = '黒： ' + calc_score(board)[0];
   const w_score = '白： ' + calc_score(board)[1];
-  const score =
-    b_score +
-    '\n' +
-    w_score +
-    '\n'
+  const score = b_score + '\n' + w_score + '\n';
   if (status === Gamestatus.Ok) {
     if (board.black_turn) {
       return score + '黒の手番です';
@@ -289,7 +289,6 @@ export function create_message(game: Game, status: Gamestatus): string {
   }
   return 'バグ';
 }
-function weak_agent_move(): AIAgent | "user" {
+function weak_agent_move(): AIAgent | 'user' {
   throw new Error('Function not implemented.');
 }
-
