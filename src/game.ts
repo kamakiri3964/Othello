@@ -44,6 +44,7 @@ export type Game = {
   start_button: HTMLButtonElement;
   select_black: HTMLButtonElement;
   select_white: HTMLButtonElement;
+  select_AIbattle: HTMLButtonElement;
   cancel_button: HTMLButtonElement;
   now_gaming: boolean;
   black_player: AIAgent | 'user';
@@ -67,13 +68,15 @@ export function put_start_button(
   start_button: HTMLButtonElement,
   cancel_button: HTMLButtonElement,
   select_black: HTMLButtonElement,
-  select_white: HTMLButtonElement
+  select_white: HTMLButtonElement,
+  select_AIbattle: HTMLButtonElement
 ): void {
   start_button.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
     game.start_button.style.display = 'none';
     game.select_black.style.display = 'none';
     game.select_white.style.display = 'none';
+    game.select_AIbattle.style.display = 'none';
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
@@ -87,6 +90,7 @@ export function put_start_button(
     game.start_button.style.display = 'none';
     game.select_black.style.display = 'none';
     game.select_white.style.display = 'none';
+    game.select_AIbattle.style.display = 'none';
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
@@ -100,6 +104,7 @@ export function put_start_button(
     game.start_button.style.display = 'none';
     game.select_black.style.display = 'none';
     game.select_white.style.display = 'none';
+    game.select_AIbattle.style.display = 'none';
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
@@ -107,6 +112,20 @@ export function put_start_button(
     game.white_player = 'user';
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
+  });
+  select_AIbattle.addEventListener('click', (e: MouseEvent) => {
+    game.now_gaming = true;
+    game.start_button.style.display = 'none';
+    game.select_black.style.display = 'none';
+    game.select_white.style.display = 'none';
+    game.select_AIbattle.style.display = 'none';
+    game.cancel_button.style.display = 'inline';
+    game.board = generate_initial_board();
+    draw_board(game.board, game.canvas);
+    game.black_player = minimax_stone_count_agent();
+    game.white_player = alphabeta_stone_count_agent();
+    game.message_holder.innerText =
+    '黒の手番です。';
   });
 }
 
@@ -128,7 +147,8 @@ export function create_game(
   start_button: HTMLButtonElement,
   cancel_button: HTMLButtonElement,
   select_black: HTMLButtonElement,
-  select_white: HTMLButtonElement
+  select_white: HTMLButtonElement,
+  select_AIbattle: HTMLButtonElement
 ): Game {
   const game: Game = {
     last: performance.now(),
@@ -141,6 +161,7 @@ export function create_game(
     cancel_button: cancel_button,
     select_black: select_black,
     select_white: select_white,
+    select_AIbattle: select_AIbattle,
     now_gaming: false,
     black_player: 'user',
     white_player: 'user',
@@ -151,13 +172,15 @@ export function create_game(
   game.start_button.style.display = 'inline';
   game.select_black.style.display = 'inline';
   game.select_white.style.display = 'inline';
+  game.select_AIbattle.style.display = 'inline';
   register_mouse_input_listner(game);
   put_start_button(
     game,
     game.start_button,
     game.cancel_button,
     game.select_black,
-    game.select_white
+    game.select_white,
+    game.select_AIbattle
   );
   return game;
 }
@@ -206,6 +229,7 @@ function input_state(game: Game): boolean {
       game.start_button.style.display = 'inline';
       game.select_black.style.display = 'inline';
       game.select_white.style.display = 'inline';
+      game.select_AIbattle.style.display = 'inline';
       return true;
     } else {
       game.message_holder.innerText = create_message(game, status);

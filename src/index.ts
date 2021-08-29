@@ -35,6 +35,9 @@ const main = () => {
   const select_white = document.getElementById(
     'select_white'
   ) as HTMLButtonElement;
+  const select_AIbattle = document.getElementById(
+    'select_AIbattle'
+  ) as HTMLButtonElement;
 
   start_button.style.display = 'none';
   cancel_button.style.display = 'none';
@@ -45,7 +48,8 @@ const main = () => {
     start_button,
     cancel_button,
     select_black,
-    select_white
+    select_white,
+    select_AIbattle
   );
   put_cancel_button(game, game.cancel_button);
   draw_board(game.board, canvas);
