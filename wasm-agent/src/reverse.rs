@@ -1,5 +1,3 @@
-use once_cell::sync::Lazy;
-
 static mut MASK: [[[u64; 4]; 8]; 8] = [[[0; 4]; 8]; 8];
 static mut OUTFLANK: [[u8; 1<<8]; 8] = [[0; 1<<8]; 8];
 static mut FLIPPED: [u8; 1<<8] = [0; 1<<8];
@@ -21,15 +19,11 @@ unsafe fn init_flipped() {
 }
 
 pub fn init_reverse() {
-    // outflank(1, 0);
-    // flipped(0);
     unsafe{
         init_outflank();
         init_flipped();
         init_mask();
     }
-    // extruct_line(0, 0, 0, 0);
-    // inv_extruct_line(0, 0, 0, 0);
 }
 
 fn new_outflank() -> [[u8; 1<<8]; 8] {
@@ -64,9 +58,10 @@ fn calc_outflank(pos: u8, opp: u8) -> u8 {
     ret
 }
 
-pub unsafe fn outflank(pos: u8, opp: u8) -> u8 {
-    // static OUTFLANK: Lazy<[[u8; 1<<8]; 8]> = Lazy::new(new_outflank);
-    *OUTFLANK.get_unchecked(pos.trailing_zeros() as usize).get_unchecked(opp as usize)
+pub fn outflank(pos: u8, opp: u8) -> u8 {
+    unsafe {
+        *OUTFLANK.get_unchecked(pos.trailing_zeros() as usize).get_unchecked(opp as usize)
+    }
 }
 
 fn new_flipped() -> [u8; 1<<8] {
@@ -94,9 +89,10 @@ pub fn calc_flipped(of: u8) -> u8 {
     ret
 }
 
-pub unsafe fn flipped(of: u8) -> u8 {
-    // static FLIPPED: Lazy<[u8; 1<<8]> = Lazy::new(new_flipped);
-    *FLIPPED.get_unchecked(of as usize)
+pub fn flipped(of: u8) -> u8 {
+    unsafe {
+        *FLIPPED.get_unchecked(of as usize)
+    }
 }
 
 pub fn reverse(player: u64, opponent: u64, pos: u64) -> u64 {
@@ -114,28 +110,6 @@ pub fn reverse(player: u64, opponent: u64, pos: u64) -> u64 {
         }
     }
     ret
-}
-
-pub fn extruct_line2(b: u64, x: u32, y: u32, d: usize) -> u8 {
-    let f = [
-        get_horizontal_edge,
-        get_vertical_edge,
-        get_diag_up_left_edge,
-        get_diag_up_right_edge
-    ];
-    let s = [
-        |b: u64, x: u32, _: u32| -> u64 { b >> (8*x) },
-        |b: u64, _: u32, y: u32| -> u64 { b >> y },
-        |b: u64, x: u32, y: u32| -> u64 { if x < y { b << (8*(y - x)) } else { b >> (8*(x - y))}},
-        |b: u64, x: u32, y: u32| -> u64 { if x+y > 7 { b >> (8*((y + x) - 7)) } else { b << (8*(7 - (x + y)))}}
-    ];
-    let masks = [
-        0x0000_0000_0000_00ff,
-        0x0101_0101_0101_0101,
-        0x8040_2010_0804_0201,
-        0x0102_0408_1020_4080
-    ];
-    f[d](s[d](b, x, y)&masks[d])
 }
 
 fn new_mask() -> [[[u64; 4]; 8]; 8] {
@@ -170,22 +144,17 @@ fn new_mask() -> [[[u64; 4]; 8]; 8] {
 }
 
 pub unsafe fn extruct_line(b: u64, x: u32, y: u32, d: usize) -> u8 {
-    // static MASK: Lazy<[[[u64; 4]; 8]; 8]> = Lazy::new(new_mask);
     match d {
         0 => {
-            // ((b & MASK[x as usize][y as usize][d]) >> (8 * x) ) as u8
             ((b & get_mask(x as usize, y as usize, d)) >> (8 * x) ) as u8
         },
         1 => {
-            // (((b & MASK[x as usize][y as usize][d]) >> y).wrapping_mul(0x8040_2010_0804_0201) >> (8 * 7)) as u8
             (((b & get_mask(x as usize, y as usize, d)) >> y).wrapping_mul(0x8040_2010_0804_0201) >> (8 * 7)) as u8
         },
         2 => {
-            // ((b & MASK[x as usize][y as usize][d]).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
             ((b & get_mask(x as usize, y as usize, d)).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
         },
         3 => {
-            // ((b & MASK[x as usize][y as usize][d]).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
             ((b & get_mask(x as usize, y as usize, d)).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
         },
         _ => { panic!("direction(d) should be 0-4") }
@@ -193,76 +162,21 @@ pub unsafe fn extruct_line(b: u64, x: u32, y: u32, d: usize) -> u8 {
 }
 
 pub unsafe fn inv_extruct_line(l: u8, x: u32, y: u32, d: usize) -> u64 {
-    // static MASK: Lazy<[[[u64; 4]; 8]; 8]> = Lazy::new(new_mask);
     match d {
         0 => {
             (l as u64) << (8 * x)
         },
         1 => {
-            // ((l as u64).wrapping_mul(0x8040_2010_0804_0201) >> (7-y)) & MASK[x as usize][y as usize][d]
             ((l as u64).wrapping_mul(0x8040_2010_0804_0201) >> (7-y)) & get_mask(x as usize, y as usize, d)
         },
         2 => {
-            // (l as u64).wrapping_mul(0x0101_0101_0101_0101) & MASK[x as usize][y as usize][d]
             (l as u64).wrapping_mul(0x0101_0101_0101_0101) & get_mask(x as usize, y as usize, d)
         },
         3 => {
-            // (l as u64).wrapping_mul(0x0101_0101_0101_0101) & MASK[x as usize][y as usize][d]
             (l as u64).wrapping_mul(0x0101_0101_0101_0101) & get_mask(x as usize, y as usize, d)
         },
         _ => { panic!("direction(d) should be 0-4") }
     }
-}
-
-pub fn inv_extruct_line2(l: u8, x: u32, y: u32, d: usize) -> u64 {
-    let f = [
-        set_horizontal_edge,
-        set_vertical_edge,
-        set_diag_up_left_edge,
-        set_diag_up_right_edge
-    ];
-    let s = [
-        |b: u64, x: u32, _: u32| -> u64 { b << (8*x) },
-        |b: u64, _: u32, y: u32| -> u64 { b << y },
-        |b: u64, x: u32, y: u32| -> u64 { if x < y { b >> (8*(y - x)) } else { b << (8*(x - y))}},
-        |b: u64, x: u32, y: u32| -> u64 { if x+y > 7 { b << (8*((y + x) - 7)) } else { b >> (8*(7 - (x + y)))}}
-    ];
-    s[d](f[d](l), x, y)
-}
-
-pub fn get_horizontal_edge(board: u64) -> u8 {
-    (board & 0x0000_0000_0000_00ff) as u8
-}
-
-pub fn set_horizontal_edge(edge: u8) -> u64 {
-    edge as u64
-}
-
-pub fn get_vertical_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0102_0408_1020_4080) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
-}
-
-pub fn set_vertical_edge(edge: u8) -> u64 {
-    (((edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x8040_2010_0804_0201)
-        .wrapping_mul(0x0000_0000_0000_00ff)
-        >> 7)
-        & 0x0101_0101_0101_0101
-}
-
-pub fn get_diag_up_right_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
-}
-
-pub fn set_diag_up_right_edge(edge: u8) -> u64 {
-    (edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x0102_0408_1020_4080
-}
-
-pub fn get_diag_up_left_edge(board: u64) -> u8 {
-    ((board.wrapping_mul(0x0101_0101_0101_0101) & 0xff00_0000_0000_0000) >> (8 * 7)) as u8
-}
-
-pub fn set_diag_up_left_edge(edge: u8) -> u64 {
-    (edge as u64).wrapping_mul(0x0101_0101_0101_0101) & 0x8040_2010_0804_0201
 }
 
 
@@ -275,40 +189,40 @@ mod tests {
     fn test_outflank() {
         unsafe {
             init_outflank();
-            let pos = 0x10;
-            let opp = 0x28;
-            assert_eq!(outflank(pos, opp), 0x44);
-            let opp = 0x68;
-            assert_eq!(outflank(pos, opp), 0x84);
-            let opp = 0xe8;
-            assert_eq!(outflank(pos, opp), 0x04);
-            let opp = 0x44;
-            assert_eq!(outflank(pos, opp), 0x00);
-            let pos = 0x01;
-            let opp = 0x06;
-            assert_eq!(outflank(pos, opp), 0x08);
-            let pos = 0x01;
-            let opp = 0x04;
-            assert_eq!(outflank(pos, opp), 0x00);
-            let pos = 0x02;
-            let opp = 0x05;
-            assert_eq!(outflank(pos, opp), 0x08);
-            let pos = 0x04;
-            let opp = 0x13;
-            assert_eq!(outflank(pos, opp), 0x00);
         }
+        let pos = 0x10;
+        let opp = 0x28;
+        assert_eq!(outflank(pos, opp), 0x44);
+        let opp = 0x68;
+        assert_eq!(outflank(pos, opp), 0x84);
+        let opp = 0xe8;
+        assert_eq!(outflank(pos, opp), 0x04);
+        let opp = 0x44;
+        assert_eq!(outflank(pos, opp), 0x00);
+        let pos = 0x01;
+        let opp = 0x06;
+        assert_eq!(outflank(pos, opp), 0x08);
+        let pos = 0x01;
+        let opp = 0x04;
+        assert_eq!(outflank(pos, opp), 0x00);
+        let pos = 0x02;
+        let opp = 0x05;
+        assert_eq!(outflank(pos, opp), 0x08);
+        let pos = 0x04;
+        let opp = 0x13;
+        assert_eq!(outflank(pos, opp), 0x00);
     }
 
     #[test]
     fn test_flipped() {
         unsafe {
             init_flipped();
-            assert_eq!(flipped(0x81), 0x7e);
-            assert_eq!(flipped(0x89), 0x76);
-            assert_eq!(flipped(0x10), 0x00);
-            assert_eq!(flipped(0x48), 0x30);
-            assert_eq!(flipped(0x42), 0x3c);
         }
+        assert_eq!(flipped(0x81), 0x7e);
+        assert_eq!(flipped(0x89), 0x76);
+        assert_eq!(flipped(0x10), 0x00);
+        assert_eq!(flipped(0x48), 0x30);
+        assert_eq!(flipped(0x42), 0x3c);
     }
 
     #[test]
@@ -435,164 +349,5 @@ next: X
             let line = extruct_line(board.opponent, x, y, 3);
             assert_eq!(inv_extruct_line(line, x, y, 3), 0x0000_0000_0008_0020);
         }
-    }
-
-    #[test]
-    fn test_get_vertical_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | | |X|
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | |X|
-6 | | | | | | | |X|
-7 | | | | | | | | |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let mut board = Board::parse(board_string);
-        board.player = get_vertical_edge(board.player) as u64;
-        let rotated_string = r#"   A B C D E F G H
-1 | | | | | | | | |
-2 | | | | | | | | |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | | | |
-8 |X|X| | |X|X| |X|
-
-next: X
-"#;
-        let expected = Board::parse(rotated_string);
-        assert_eq!(board, expected);
-    }
-
-    #[test]
-    fn test_set_vertical_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | | |X|
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | |X|
-6 | | | | | | | |X|
-7 | | | | | | | | |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let board = Board::parse(board_string);
-        assert_eq!(
-            board.player,
-            set_vertical_edge(get_vertical_edge(board.player))
-        );
-    }
-
-    #[test]
-    fn test_get_diag_up_right_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | |X| |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | |X| | | | |
-6 | | |X| | | | | |
-7 | | | | | | | | |
-8 |X| | | | | | | |
-
-next: X
-"#;
-        let mut board = Board::parse(board_string);
-        board.player = get_diag_up_right_edge(board.player) as u64;
-        let rotated_string = r#"   A B C D E F G H
-1 | | | | | | | | |
-2 | | | | | | | | |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | | | |
-8 |X| |X|X| | |X|X|
-
-next: X
-"#;
-        let expected = Board::parse(rotated_string);
-        assert_eq!(board, expected);
-    }
-
-    #[test]
-    fn test_set_diag_up_right_edge() {
-        let board_string = r#"   A B C D E F G H
-1 | | | | | | | |X|
-2 | | | | | | |X| |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | |X| | | | |
-6 | | |X| | | | | |
-7 | | | | | | | | |
-8 |X| | | | | | | |
-
-next: X
-"#;
-        let board = Board::parse(board_string);
-        assert_eq!(
-            board.player,
-            set_diag_up_right_edge(get_diag_up_right_edge(board.player))
-        );
-    }
-
-    #[test]
-    fn test_get_diag_up_left_edge() {
-        let board_string = r#"   A B C D E F G H
-1 |X| | | | | | | |
-2 | | | | | | | | |
-3 | | |X| | | | | |
-4 | | | |X| | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | |X| |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let mut board = Board::parse(board_string);
-        board.player = get_diag_up_left_edge(board.player) as u64;
-        let rotated_string = r#"   A B C D E F G H
-1 | | | | | | | | |
-2 | | | | | | | | |
-3 | | | | | | | | |
-4 | | | | | | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | | | |
-8 |X| |X|X| | |X|X|
-
-next: X
-"#;
-        let expected = Board::parse(rotated_string);
-        assert_eq!(board, expected);
-    }
-
-    #[test]
-    fn test_set_diag_up_left_edge() {
-        let board_string = r#"   A B C D E F G H
-1 |X| | | | | | | |
-2 | | | | | | | | |
-3 | | |X| | | | | |
-4 | | | |X| | | | |
-5 | | | | | | | | |
-6 | | | | | | | | |
-7 | | | | | | |X| |
-8 | | | | | | | |X|
-
-next: X
-"#;
-        let board = Board::parse(board_string);
-        assert_eq!(
-            board.player,
-            set_diag_up_left_edge(get_diag_up_left_edge(board.player))
-        );
     }
 }

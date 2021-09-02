@@ -88,7 +88,7 @@ impl Board {
     }
 
     pub fn reverse(&self, pos: u64) -> u64 {
-        reverse(self.player, self.opponent, pos)
+        reverse(self.player, self.opponent, pos)  // outflank version
         // let n_shifts_and_masks = [
         //     (1u64, 0x7e7e7e7e7e7e7e7e), // right / left
         //     (7u64, 0x007e7e7e7e7e7e00), // down left / up right
