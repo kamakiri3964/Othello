@@ -4,9 +4,10 @@ use std::{
 };
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use wasm_agent::othello::{lsb, Board};
+use wasm_agent::{othello::{lsb, Board}, reverse::init_reverse};
 
 fn criterion_benchmark(c: &mut Criterion) {
+    init_reverse();
     let mut boards = Vec::new();
     if let Ok(file) = File::open("./data/random_boards.jsonl") {
         for result in BufReader::new(file).lines() {
