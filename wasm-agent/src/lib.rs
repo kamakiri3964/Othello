@@ -1,5 +1,6 @@
 pub mod agent;
 pub mod minmax_agent;
+pub mod alphabeta_agent;
 pub mod othello;
 pub mod reverse;
 
