@@ -2,7 +2,7 @@ use std::{fs::File, io::Write, time::Instant};
 
 use pprof::protos::Message;
 // use wasm_agent::{agent::Agent, minmax_agent::{MinMaxAgent, n_search}, othello::Board, reverse::init_reverse};
-use wasm_agent::{
+use crate::{
     agent::Agent,
     alphabeta_agent::{n_search, AlphaBetaAgent},
     evaluation::count_legal,
@@ -10,7 +10,9 @@ use wasm_agent::{
     reverse::init_reverse,
 };
 
-fn main() {
+#[test]
+#[ignore]
+fn test_prof() {
     let depth = 8;
     // let mut agent = MinMaxAgent::new(depth);
     // let mut agent = AlphaBetaAgent::new(depth, count_stone);

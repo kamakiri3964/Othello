@@ -17,7 +17,7 @@ $(DATADIR)/opening.jsonl: $(SRCS)
 	cargo run --bin generate_opening > $(DATADIR)/opening.jsonl
 
 profile.pb: $(SRCS)
-	cargo run --bin prof_agent --release
+	cargo test profile_test::test_prof --release -- --ignored
 
 profile: profile.pb
 	go tool pprof -http localhost:8080 profile.pb

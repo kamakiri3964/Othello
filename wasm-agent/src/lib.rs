@@ -20,3 +20,6 @@ mod tests {
         assert_eq!(greeting(), "hello".to_string());
     }
 }
+
+#[cfg(test)]
+mod profile_test;
