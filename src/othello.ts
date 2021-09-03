@@ -17,6 +17,10 @@ export type Board = {
   black_turn: boolean;
 };
 
+//export type Board_history = new Array(64).fill(Board)
+
+export type Board_history = [Board, Gamestatus][];
+
 //盤面初期化
 export function generate_initial_board(): Board {
   const black = new Array(8);
@@ -153,7 +157,7 @@ export function flip_stone(point: [number, number], board: Board): boolean {
 }
 
 //手番を進める
-export function move_turn(board: Board) {
+export function move_turn(board: Board): Board {
   board.black_turn = !board.black_turn;
   return board;
 }
@@ -373,22 +377,24 @@ export enum Gamestatus {
 
 //現在の盤面と次の着手が与えられて次の盤面を返す
 export function next_state(
-  board: Board,
+  input_board: Readonly<Board>,
   p: [number, number]
 ): [Board, Gamestatus] {
+  const board = deep_copy_board(input_board);
   if (is_valid_move(p, board) && put_stone(p, board.black_turn, board)) {
     const can_flip_places = flipable_all_places(p, board);
     for (const elements of can_flip_places) {
       flip_stone(elements, board);
     }
-    board = move_turn(board);
+
+    move_turn(board);
 
     if (all_valid_moves(board).length > 0) {
       return [board, Gamestatus.Ok];
     }
 
     if (all_valid_moves(board).length === 0) {
-      board = move_turn(board);
+      move_turn(board);
       if (all_valid_moves(board).length === 0) {
         return [board, Gamestatus.End];
       } else {
@@ -398,6 +404,53 @@ export function next_state(
   }
   return [board, Gamestatus.Error];
 }
+
+export function update_history(
+  board_history: Board_history,
+  turn_number: number,
+  user_input: [number, number]
+): number {
+  const board = board_history[turn_number]![0];
+  delete_later_turn(board_history, turn_number);
+  const [next_board, status] = next_state(board, user_input);
+  board_history.push([next_board, status]);
+  return turn_number + 1;
+}
+
+//現在の盤面と次の着手が与えられて次の盤面をhistoryに保存する
+/*
+export function keep_next_state(
+  board: Readonly<Board>,
+  p: [number, number],
+  board_history: Board_history,
+  turn_number: number
+):number{
+  let temporary_board = deep_copy_board(board_history[turn_number]![0])
+  if (is_valid_move(p, temporary_board) && put_stone(p, board.black_turn, temporary_board)) {
+    const can_flip_places = flipable_all_places(p, board);
+    for (const elements of can_flip_places) {
+      flip_stone(elements, temporary_board);
+    }
+    temporary_board = move_turn(temporary_board);
+    if (all_valid_moves(temporary_board).length > 0) {
+      const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Ok, turn_number);
+      return put_number
+    }
+
+    if (all_valid_moves(temporary_board).length === 0) {
+      temporary_board = move_turn(temporary_board);
+      if (all_valid_moves(temporary_board).length === 0) {
+        const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.End, turn_number);
+        return put_number
+      } else {
+        const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Pass, turn_number);
+        return put_number;
+      }
+    }
+  }
+  return turn_number
+}
+*/
 
 export function deep_copy_board_array(
   board_array: Readonly<BoardArray>
@@ -411,4 +464,74 @@ export function deep_copy_board(board: Readonly<Board>): Board {
     black: deep_copy_board_array(board.black),
     white: deep_copy_board_array(board.white),
   };
+}
+
+export function add_board_history(
+  board: Readonly<Board>,
+  board_history: Board_history,
+  status: Gamestatus,
+  turn_number: number
+): number {
+  board_history.push([deep_copy_board(board), status]);
+  const put_turn_number = turn_number + 1;
+  return put_turn_number;
+}
+
+//historyは消さずにboaedが1ターン戻る
+export function return_one_turn(
+  board_history: Board_history,
+  turn_number: number
+): Board {
+  if (turn_number >= 1) {
+    const board = deep_copy_board(board_history[turn_number - 1]![0]);
+    turn_number = turn_number - 1;
+    return board;
+  }
+  return deep_copy_board(board_history[turn_number]![0]);
+}
+
+//historyは消さずにboaedが1ターン進む
+export function next_one_turn(
+  board_history: Board_history,
+  turn_number: number
+): Board {
+  if (turn_number < board_history.length - 1) {
+    const board = deep_copy_board(board_history[turn_number + 1]![0]);
+    turn_number++;
+    return board;
+  }
+  return deep_copy_board(board_history[turn_number]![0]);
+}
+
+//そのboard以降のhistoryを消す
+export function delete_later_turn(
+  board_history: Board_history,
+  turn_number: number
+): Board_history {
+  if (board_history.length > 1) {
+    const number_of_delete = board_history.length - turn_number - 1;
+    for (let i = 0; i < number_of_delete; i++) {
+      board_history.pop();
+    }
+    return board_history;
+  }
+  return board_history;
+}
+
+//前回のその色のターンまで戻る
+export function back_to_my_turn(
+  board_history: Board_history,
+  turn_number: number
+): number {
+  if (turn_number > 1) {
+    const is_black_turn = board_history[turn_number]![0].black_turn;
+    turn_number--;
+    let before_board = deep_copy_board(board_history[turn_number]![0]);
+    while (is_black_turn !== before_board.black_turn) {
+      turn_number--;
+      before_board = deep_copy_board(board_history[turn_number]![0]);
+    }
+    return turn_number;
+  }
+  return turn_number;
 }

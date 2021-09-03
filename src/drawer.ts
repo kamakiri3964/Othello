@@ -17,58 +17,6 @@ import {
   Gamestatus,
 } from './othello';
 
-/*
-export function draw_grid(canvas: HTMLCanvasElement): void {
-  const ctx = canvas.getContext('2d');
-  //    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-  let long = 0;
-  let short = 0;
-
-  if (canvas.height >= canvas.width) {
-    long = canvas.height;
-    short = canvas.width;
-  } else {
-    long = canvas.width;
-    short = canvas.height;
-  }
-
-  let [field_sp_x, field_sp_y] = [short / 8, short / 8];
-  let field_size_length = (short * 3) / 4;
-
-  if (ctx != undefined) {
-    // 基礎の盤面長方形に塗りつぶす 左上(短辺1/8, 短辺1/8) 幅: 短辺3/4, 高さ: 短辺3/4
-    ctx.fillStyle = 'green';
-    ctx.fillRect(field_sp_x, field_sp_y, field_size_length, field_size_length);
-
-    // 縦線をひく (短辺1/8, 短辺1/8) から (短辺1/8, 短辺7/8)までを右に短辺3/32ずつ
-    ctx.strokeStyle = 'gray';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 9; i++) {
-      ctx.beginPath();
-      ctx.moveTo(field_sp_x + (field_size_length / 8) * i, field_sp_y);
-      ctx.lineTo(
-        field_sp_x + (field_size_length / 8) * i,
-        field_sp_y + field_size_length
-      );
-      ctx.stroke();
-    }
-
-    // 横線をひく (短辺1/8, 短辺1/8) から (短辺7/8, 短辺1/8)までを下に短辺3/32ずつ
-    ctx.strokeStyle = 'gray';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 9; i++) {
-      ctx.beginPath();
-      ctx.moveTo(field_sp_x, field_sp_y + (field_size_length / 8) * i);
-      ctx.lineTo(
-        field_sp_x + field_size_length,
-        field_sp_y + (field_size_length / 8) * i
-      );
-      ctx.stroke();
-    }
-  }
-}
-*/
-
 export function convert_vec(
   x: number,
   y: number,
@@ -155,6 +103,32 @@ export function draw_piece(
   }
 }
 
+export function draw_can_put_place(
+  i: number,
+  j: number,
+  canvas: HTMLCanvasElement
+): void {
+  const ctx = canvas.getContext('2d');
+  //    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+
+  const [center_x, center_y] = convert_vec(
+    100 / 16 + (j * 100) / 8,
+    100 / 16 + (i * 100) / 8,
+    canvas
+  );
+  const r = convert_scal(2, canvas);
+
+  if (ctx != undefined) {
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = 'gray';
+    ctx.beginPath();
+    ctx.arc(center_x, center_y, r, 0, Math.PI * 2, false);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
 export function draw_pieces(board: Board, canvas: HTMLCanvasElement): void {
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
@@ -171,8 +145,8 @@ export function draw_board(board: Board, canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext('2d');
   const field_size = [
     document.body.clientWidth,
-    window.innerHeight,
-    800,
+    window.innerHeight - 100,
+    600,
   ].reduce((a, b) => Math.min(a, b));
   canvas.height = field_size;
   canvas.width = field_size;
@@ -185,6 +159,9 @@ export function draw_board(board: Board, canvas: HTMLCanvasElement): void {
   }
   draw_grid(canvas);
   draw_pieces(board, canvas);
+  all_valid_moves(board).forEach(function (element) {
+    draw_can_put_place(element[0], element[1], canvas);
+  });
 }
 
 export function input_convert_place(
