@@ -1,8 +1,19 @@
 use serde::{Deserialize, Serialize};
-use std::{env, fs::File, io::{BufRead, BufReader}};
+use std::{
+    env,
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
 use rand::SeedableRng;
-use wasm_agent::{agent::{Agent, RandomAgent}, alphabeta_agent::AlphaBetaAgent, minmax_agent::MinMaxAgent, othello::{Board, GameStatus}, reverse::init_reverse};
+use wasm_agent::{
+    agent::{Agent, RandomAgent},
+    alphabeta_agent::AlphaBetaAgent,
+    evaluation::{count_legal, count_stone},
+    minmax_agent::MinMaxAgent,
+    othello::{Board, GameStatus},
+    reverse::init_reverse,
+};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 struct GameResult {
@@ -13,7 +24,7 @@ struct GameResult {
     black_stone: u32,
     white_stone: u32,
     black_win: bool,
-    white_win: bool
+    white_win: bool,
 }
 
 fn load_boards() -> Vec<Board> {
@@ -34,9 +45,18 @@ fn main() {
     init_reverse();
     let boards = load_boards();
     let agent_list: Vec<(&str, Box<dyn Agent>)> = vec![
-        ("random", Box::new(RandomAgent::new(rand_xoshiro::Xoshiro256StarStar::seed_from_u64(123)))),
+        (
+            "random",
+            Box::new(RandomAgent::new(
+                rand_xoshiro::Xoshiro256StarStar::seed_from_u64(123),
+            )),
+        ),
         ("minmax", Box::new(MinMaxAgent::new(6))),
-        ("alphabata", Box::new(AlphaBetaAgent::new(6)))
+        ("alphabata", Box::new(AlphaBetaAgent::new(6, count_stone))),
+        (
+            "alphabata_legal",
+            Box::new(AlphaBetaAgent::new(6, count_legal)),
+        ),
     ];
 
     let args: Vec<String> = env::args().collect();
@@ -47,7 +67,7 @@ fn main() {
 
     let mut agents = [
         Box::new(agent_list[black_idx].1.clone()),
-        Box::new(agent_list[white_idx].1.clone())
+        Box::new(agent_list[white_idx].1.clone()),
     ];
     let mut board = boards[board_idx].clone();
     let start_board = board.clone();
@@ -55,7 +75,9 @@ fn main() {
     // println!("{}", board);
 
     loop {
-        let p = agents[if board.is_player_black { 0 } else { 1 }].as_mut().next(&board);
+        let p = agents[if board.is_player_black { 0 } else { 1 }]
+            .as_mut()
+            .next(&board);
         match board.next(p) {
             Ok((b, status)) => {
                 board = b;
@@ -69,8 +91,16 @@ fn main() {
         }
     }
 
-    let b = if board.is_player_black { board.player.count_ones() } else { board.opponent.count_ones() };
-    let w = if !board.is_player_black { board.player.count_ones() } else { board.opponent.count_ones() };
+    let b = if board.is_player_black {
+        board.player.count_ones()
+    } else {
+        board.opponent.count_ones()
+    };
+    let w = if !board.is_player_black {
+        board.player.count_ones()
+    } else {
+        board.opponent.count_ones()
+    };
     let result = GameResult {
         start: start_board,
         end: board,

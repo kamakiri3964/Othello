@@ -1,6 +1,6 @@
 static mut MASK: [[[u64; 4]; 8]; 8] = [[[0; 4]; 8]; 8];
-static mut OUTFLANK: [[u8; 1<<8]; 8] = [[0; 1<<8]; 8];
-static mut FLIPPED: [u8; 1<<8] = [0; 1<<8];
+static mut OUTFLANK: [[u8; 1 << 8]; 8] = [[0; 1 << 8]; 8];
+static mut FLIPPED: [u8; 1 << 8] = [0; 1 << 8];
 
 unsafe fn init_mask() {
     MASK = new_mask();
@@ -19,18 +19,18 @@ unsafe fn init_flipped() {
 }
 
 pub fn init_reverse() {
-    unsafe{
+    unsafe {
         init_outflank();
         init_flipped();
         init_mask();
     }
 }
 
-fn new_outflank() -> [[u8; 1<<8]; 8] {
-    let mut outflank: [[u8; 1<<8]; 8] = [[0; 1<<8]; 8];
+fn new_outflank() -> [[u8; 1 << 8]; 8] {
+    let mut outflank: [[u8; 1 << 8]; 8] = [[0; 1 << 8]; 8];
     for i in 0..8 {
         let pos = 1 << i;
-        for opp in 0..(1u16<<8) {
+        for opp in 0..(1u16 << 8) {
             outflank[i][opp as usize] = calc_outflank(pos, opp as u8);
         }
     }
@@ -42,7 +42,7 @@ fn calc_outflank(pos: u8, opp: u8) -> u8 {
     let mut p = pos;
     p = p << 1;
     if p & opp != 0 {
-        while p&opp != 0 {
+        while p & opp != 0 {
             p = p << 1;
         }
         ret |= p;
@@ -50,7 +50,7 @@ fn calc_outflank(pos: u8, opp: u8) -> u8 {
     p = pos;
     p = p >> 1;
     if p & opp != 0 {
-        while p&opp != 0 {
+        while p & opp != 0 {
             p = p >> 1;
         }
         ret |= p;
@@ -60,13 +60,15 @@ fn calc_outflank(pos: u8, opp: u8) -> u8 {
 
 pub fn outflank(pos: u8, opp: u8) -> u8 {
     unsafe {
-        *OUTFLANK.get_unchecked(pos.trailing_zeros() as usize).get_unchecked(opp as usize)
+        *OUTFLANK
+            .get_unchecked(pos.trailing_zeros() as usize)
+            .get_unchecked(opp as usize)
     }
 }
 
-fn new_flipped() -> [u8; 1<<8] {
-    let mut flipped: [u8; 1<<8] = [0; 1<<8];
-    for of in 0..(1u16<<8) {
+fn new_flipped() -> [u8; 1 << 8] {
+    let mut flipped: [u8; 1 << 8] = [0; 1 << 8];
+    for of in 0..(1u16 << 8) {
         flipped[of as usize] = calc_flipped(of as u8);
     }
     flipped
@@ -90,9 +92,7 @@ pub fn calc_flipped(of: u8) -> u8 {
 }
 
 pub fn flipped(of: u8) -> u8 {
-    unsafe {
-        *FLIPPED.get_unchecked(of as usize)
-    }
+    unsafe { *FLIPPED.get_unchecked(of as usize) }
 }
 
 pub fn reverse(player: u64, opponent: u64, pos: u64) -> u64 {
@@ -101,7 +101,8 @@ pub fn reverse(player: u64, opponent: u64, pos: u64) -> u64 {
     let x = i / 8;
     let y = i % 8;
     for d in 0..4 {
-        unsafe {  // x = [0, 8), y = [0, 8), d = [0, 4)
+        unsafe {
+            // x = [0, 8), y = [0, 8), d = [0, 4)
             let ply = extruct_line(player, x, y, d);
             let opp = extruct_line(opponent, x, y, d);
             let p = extruct_line(pos, x, y, d);
@@ -131,13 +132,21 @@ fn new_mask() -> [[[u64; 4]; 8]; 8] {
     let m = 0x8040_2010_0804_0201;
     for y in 0..8 {
         for x in 0..8 {
-            mask[x][y][2] = if x < y { m >> (8*(y - x)) } else { m << (8*(x - y))};
+            mask[x][y][2] = if x < y {
+                m >> (8 * (y - x))
+            } else {
+                m << (8 * (x - y))
+            };
         }
     }
     let m = 0x0102_0408_1020_4080;
     for y in 0..8 {
         for x in 0..8 {
-            mask[x][y][3] = if x+y > 7 { m << (8*((y + x) - 7)) } else { m >> (8*(7 - (x + y)))};
+            mask[x][y][3] = if x + y > 7 {
+                m << (8 * ((y + x) - 7))
+            } else {
+                m >> (8 * (7 - (x + y)))
+            };
         }
     }
     mask
@@ -145,44 +154,43 @@ fn new_mask() -> [[[u64; 4]; 8]; 8] {
 
 pub unsafe fn extruct_line(b: u64, x: u32, y: u32, d: usize) -> u8 {
     match d {
-        0 => {
-            ((b & get_mask(x as usize, y as usize, d)) >> (8 * x) ) as u8
-        },
+        0 => ((b & get_mask(x as usize, y as usize, d)) >> (8 * x)) as u8,
         1 => {
-            (((b & get_mask(x as usize, y as usize, d)) >> y).wrapping_mul(0x8040_2010_0804_0201) >> (8 * 7)) as u8
-        },
+            (((b & get_mask(x as usize, y as usize, d)) >> y).wrapping_mul(0x8040_2010_0804_0201)
+                >> (8 * 7)) as u8
+        }
         2 => {
-            ((b & get_mask(x as usize, y as usize, d)).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
-        },
+            ((b & get_mask(x as usize, y as usize, d)).wrapping_mul(0x0101_0101_0101_0101)
+                >> (8 * 7)) as u8
+        }
         3 => {
-            ((b & get_mask(x as usize, y as usize, d)).wrapping_mul(0x0101_0101_0101_0101) >> (8 * 7)) as u8
-        },
-        _ => { panic!("direction(d) should be 0-4") }
+            ((b & get_mask(x as usize, y as usize, d)).wrapping_mul(0x0101_0101_0101_0101)
+                >> (8 * 7)) as u8
+        }
+        _ => {
+            panic!("direction(d) should be 0-4")
+        }
     }
 }
 
 pub unsafe fn inv_extruct_line(l: u8, x: u32, y: u32, d: usize) -> u64 {
     match d {
-        0 => {
-            (l as u64) << (8 * x)
-        },
+        0 => (l as u64) << (8 * x),
         1 => {
-            ((l as u64).wrapping_mul(0x8040_2010_0804_0201) >> (7-y)) & get_mask(x as usize, y as usize, d)
-        },
-        2 => {
-            (l as u64).wrapping_mul(0x0101_0101_0101_0101) & get_mask(x as usize, y as usize, d)
-        },
-        3 => {
-            (l as u64).wrapping_mul(0x0101_0101_0101_0101) & get_mask(x as usize, y as usize, d)
-        },
-        _ => { panic!("direction(d) should be 0-4") }
+            ((l as u64).wrapping_mul(0x8040_2010_0804_0201) >> (7 - y))
+                & get_mask(x as usize, y as usize, d)
+        }
+        2 => (l as u64).wrapping_mul(0x0101_0101_0101_0101) & get_mask(x as usize, y as usize, d),
+        3 => (l as u64).wrapping_mul(0x0101_0101_0101_0101) & get_mask(x as usize, y as usize, d),
+        _ => {
+            panic!("direction(d) should be 0-4")
+        }
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::othello::{Board};
+    use crate::othello::Board;
 
     use super::*;
     #[test]

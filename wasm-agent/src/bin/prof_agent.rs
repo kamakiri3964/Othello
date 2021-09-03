@@ -2,12 +2,19 @@ use std::{fs::File, io::Write, time::Instant};
 
 use pprof::protos::Message;
 // use wasm_agent::{agent::Agent, minmax_agent::{MinMaxAgent, n_search}, othello::Board, reverse::init_reverse};
-use wasm_agent::{agent::Agent, alphabeta_agent::{AlphaBetaAgent, n_search}, othello::Board, reverse::init_reverse};
+use wasm_agent::{
+    agent::Agent,
+    alphabeta_agent::{n_search, AlphaBetaAgent},
+    evaluation::count_legal,
+    othello::Board,
+    reverse::init_reverse,
+};
 
 fn main() {
     let depth = 8;
     // let mut agent = MinMaxAgent::new(depth);
-    let mut agent = AlphaBetaAgent::new(depth);
+    // let mut agent = AlphaBetaAgent::new(depth, count_stone);
+    let mut agent = AlphaBetaAgent::new(depth, count_legal);
     let board_string = r#"   A B C D E F G H
 1 |O|O|O|O|O|O|O| |
 2 |O|X| |X|O|O|O|O|

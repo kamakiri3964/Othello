@@ -87,10 +87,10 @@ def progress_bar(generator, length):
     print(template.format("*" * w, n, length, 100, t1-t0))
 
 def main():
-    blackagent = 0
-    whiteagent = 1
-    n_opnening = 8200
-    # n_opnening = 100
+    blackagent = 2
+    whiteagent = 3
+    # n_opnening = 8200
+    n_opnening = 100
     executor = concurrent.futures.ProcessPoolExecutor(max_workers=16)
     futures = [executor.submit(run_game, t, blackagent, whiteagent) for t in range(n_opnening)]
     futures.extend([executor.submit(run_game, t, whiteagent, blackagent) for t in range(n_opnening)])
