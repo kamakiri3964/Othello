@@ -1,9 +1,14 @@
 use crate::othello::{lsb, Board};
+use dyn_clone::DynClone;
 use rand::Rng;
 
-pub trait Agent {
+pub trait Agent: DynClone {
     fn next(&mut self, board: &Board) -> u64;
 }
+
+dyn_clone::clone_trait_object!(Agent);
+
+#[derive(Clone)]
 pub struct RandomAgent<T>
 where
     T: Rng,
@@ -22,7 +27,7 @@ where
 
 impl<T> Agent for RandomAgent<T>
 where
-    T: Rng,
+    T: Rng + Clone,
 {
     fn next(&mut self, board: &Board) -> u64 {
         let mut legal = board.legal();

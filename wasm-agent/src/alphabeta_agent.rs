@@ -13,6 +13,7 @@ pub fn n_search() -> u128 {
     }
 }
 
+#[derive(Clone)]
 pub struct AlphaBetaAgent {
     depth: usize,
 }

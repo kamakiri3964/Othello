@@ -1,4 +1,4 @@
-use wasm_agent::othello::{Board, lsb};
+use wasm_agent::{othello::{Board, lsb}, reverse::init_reverse};
 
 fn gen_board(board: Board, depth: usize) -> Vec<Board> {
   if depth == 0 {
@@ -19,6 +19,7 @@ fn gen_board(board: Board, depth: usize) -> Vec<Board> {
 }
 
 fn main() {
+  init_reverse();
   let board = Board::new();
   let boards = gen_board(board, 6);
   eprintln!("{}", boards.len());
