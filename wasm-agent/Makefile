@@ -13,6 +13,9 @@ $(DATADIR)/legal.jsonl: $(DATADIR)/random_boards.jsonl $(BINDIR)/generate_legal.
 $(DATADIR)/flippable.jsonl: $(DATADIR)/random_boards.jsonl $(BINDIR)/generate_flippable.rs $(SRCS)
 	cargo run --bin generate_flippable < $(DATADIR)/random_boards.jsonl > $(DATADIR)/flippable.jsonl
 
+$(DATADIR)/opening.jsonl: $(SRCS)
+	cargo run --bin generate_opening > $(DATADIR)/opening.jsonl
+
 profile.pb: $(SRCS)
 	cargo run --bin prof_agent --release
 
