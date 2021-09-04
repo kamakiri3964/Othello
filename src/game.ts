@@ -2,7 +2,9 @@ import { basename } from 'path/posix';
 import { getSystemErrorMap } from 'util';
 import {
   AIAgent,
-  alphabeta_agent,
+  alphabeta_agent_enemy_CPP,
+  alphabeta_agent_score_count_1,
+  alphabeta_agent_stone_count,
   minimax_agent,
   new_random_player,
   new_weak_agent,
@@ -95,7 +97,7 @@ export function put_start_button(
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
     game.black_player = 'user';
-    game.white_player = alphabeta_agent();
+    game.white_player = alphabeta_agent_score_count_1();
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + 'あなた(黒)の手番です。';
   });
@@ -108,7 +110,7 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
-    game.black_player = alphabeta_agent();
+    game.black_player = alphabeta_agent_score_count_1();
     game.white_player = 'user';
     game.message_holder.innerText =
       'さあゲームを始めましょう。' + '\n' + '黒の手番です。';
@@ -122,8 +124,8 @@ export function put_start_button(
     game.cancel_button.style.display = 'inline';
     game.board = generate_initial_board();
     draw_board(game.board, game.canvas);
-    game.black_player = alphabeta_agent();
-    game.white_player = alphabeta_agent();
+    game.black_player = alphabeta_agent_enemy_CPP();
+    game.white_player = alphabeta_agent_score_count_1();
     game.message_holder.innerText = '黒の手番です。';
   });
 }

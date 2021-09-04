@@ -97,14 +97,20 @@ function eval_by_search(board: Readonly<Board>, depth: number): Score {
   }
 }
 
-export function alphabeta_agent(): AIAgent {
+export function alphabeta_agent_stone_count(): AIAgent {
   return {
-    next_move: alphabeta_move,
+    next_move: alphabeta_move_stone_count,
   };
 }
 
-function alphabeta_move(board: Readonly<Board>): [number, number] {
-  const score = alphabeta_eval_by_search(board, 6, 100000000, -100000000);
+function alphabeta_move_stone_count(board: Readonly<Board>): [number, number] {
+  const score = alphabeta_eval_by_search(
+    board,
+    6,
+    100000000,
+    -100000000,
+    stone_count_for_eval
+  );
   return score[1];
 }
 
@@ -112,10 +118,11 @@ function alphabeta_eval_by_search(
   board: Readonly<Board>,
   depth: number,
   max_score: number,
-  min_score: number
+  min_score: number,
+  input_function: Function
 ): Score {
   if (depth <= 1) {
-    return stone_count_for_eval(board);
+    return input_function(board);
   } else {
     const can_put_place = all_valid_moves(board);
     let best_score: number = -100000000;
@@ -128,7 +135,8 @@ function alphabeta_eval_by_search(
         cannot_put_board,
         depth - 1,
         -min_score,
-        -max_score
+        -max_score,
+        input_function
       );
     }
 
@@ -139,7 +147,8 @@ function alphabeta_eval_by_search(
         next_board,
         depth - 1,
         -best_score,
-        -max_score
+        -max_score,
+        input_function
       );
       if (-score[0] > max_score) {
         return [-score[0], input_place];
@@ -160,4 +169,82 @@ function stone_count_for_eval(board: Readonly<Board>): Score {
   } else {
     return [w_score, [0, 0]];
   }
+}
+
+function enemy_CPP_minimam(board: Readonly<Board>): Score {
+  const score = all_valid_moves(board).length;
+  return [score, [0, 0]];
+}
+
+export function alphabeta_agent_enemy_CPP(): AIAgent {
+  return {
+    next_move: alphabeta_move_enemy_CPP,
+  };
+}
+
+function alphabeta_move_enemy_CPP(board: Readonly<Board>): [number, number] {
+  const score = alphabeta_eval_by_search(
+    board,
+    5,
+    100000000,
+    -100000000,
+    enemy_CPP_minimam
+  );
+  return score[1];
+}
+
+const eval_score_1: number[][] = [
+  [100, -50, 40, 5, 5, 40, -50, 100],
+  [-50, -90, -10, -5, -5, -10, -90, -50],
+  [40, -10, -2, -2, -2, -2, -10, 40],
+  [5, -5, -2, 1, 1, -2, -5, 5],
+  [5, -5, -2, 1, 1, -2, -5, 5],
+  [40, -10, -2, -2, -2, -2, -10, 40],
+  [-50, -90, -10, -5, -5, -10, -90, -50],
+  [100, -50, 40, 5, 5, 40, -50, 100],
+];
+
+function eval_score_count_1(board: Readonly<Board>): Score {
+  const is_black_turn = board.black_turn;
+  let b_score = 0;
+  let w_score = 0;
+
+  board.black.forEach((r, i) => {
+    r.forEach((b, j) => {
+      if (b) {
+        b_score = b_score + eval_score_1[i]![j]!;
+      }
+    });
+  });
+  board.white.forEach((r, i) => {
+    r.forEach((b, j) => {
+      if (b) {
+        w_score = w_score + eval_score_1[i]![j]!;
+      }
+    });
+  });
+  if (is_black_turn) {
+    return [b_score - w_score, [0, 0]];
+  } else {
+    return [w_score - b_score, [0, 0]];
+  }
+}
+
+export function alphabeta_agent_score_count_1(): AIAgent {
+  return {
+    next_move: alphabeta_move_score_count_1,
+  };
+}
+
+function alphabeta_move_score_count_1(
+  board: Readonly<Board>
+): [number, number] {
+  const score = alphabeta_eval_by_search(
+    board,
+    6,
+    100000000,
+    -100000000,
+    eval_score_count_1
+  );
+  return score[1];
 }
