@@ -396,6 +396,7 @@ export function next_state(
     if (all_valid_moves(board).length === 0) {
       move_turn(board);
       if (all_valid_moves(board).length === 0) {
+        move_turn(board);
         return [board, Gamestatus.End];
       } else {
         return [board, Gamestatus.Pass];
@@ -403,6 +404,23 @@ export function next_state(
     }
   }
   return [board, Gamestatus.Error];
+}
+
+export function next_state_for_minimax(
+  input_board: Readonly<Board>,
+  p: [number, number]
+): Board {
+  const board = deep_copy_board(input_board);
+  if (is_valid_move(p, board) && put_stone(p, board.black_turn, board)) {
+    const can_flip_places = flipable_all_places(p, board);
+    for (const elements of can_flip_places) {
+      flip_stone(elements, board);
+    }
+    move_turn(board);
+    return board;
+  }
+  move_turn(board);
+  return board;
 }
 
 export function update_history(

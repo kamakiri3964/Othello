@@ -5,7 +5,9 @@ import {
   deep_copy_board,
   deep_copy_board_array,
   Gamestatus,
+  move_turn,
   next_state,
+  next_state_for_minimax,
 } from './othello';
 
 export type AIAgent = {
@@ -56,125 +58,193 @@ function weak_agent_move(board: Readonly<Board>): [number, number] {
   return scores[0]![1];
 }
 
-export function minimax_stone_count_agent(): AIAgent {
+export function minimax_agent(): AIAgent {
   return {
-    next_move: minimax_stone_count_move,
+    next_move: minimax_move,
   };
 }
 
-function minimax_stone_count_move(board: Readonly<Board>): [number, number] {
-  const score = eval_by_search(board, 4);
+function minimax_move(board: Readonly<Board>): [number, number] {
+  const score = eval_by_search(board, 6);
   return score[1];
 }
 
 function eval_by_search(board: Readonly<Board>, depth: number): Score {
-  const scores: Score[] = [];
-  const is_black_turn = board.black_turn;
   if (depth <= 1) {
-    const [b_score, w_score] = calc_score(board);
-    if (is_black_turn) {
-      return [b_score, [0, 0]];
-    } else {
-      return [w_score, [0, 0]];
-    }
+    return stone_count_for_eval(board);
   } else {
     const can_put_place = all_valid_moves(board);
+    let best_score: number = -64;
+    let best_move: [number, number] = [0, 0];
+
     for (const input_place of can_put_place) {
       const temporary_board = deep_copy_board(board);
       const [next_board, status] = next_state(temporary_board, input_place);
 
       if (status !== Gamestatus.Pass) {
         const score = eval_by_search(next_board, depth - 1);
-        scores.push([-score[0], input_place]);
+        if (-score[0] > best_score) {
+          [best_score, best_move] = [-score[0], input_place];
+        }
       } else {
         const score = eval_by_search(next_board, depth - 2);
-        scores.push([score[0], input_place]);
+        if (score[0] > best_score) {
+          [best_score, best_move] = [score[0], input_place];
+        }
       }
     }
-    scores.sort(function (a, b) {
-      if (a[0] > b[0]) return -1;
-      if (a[0] < b[0]) return 1;
-      return 0;
-    });
-    if (scores[0] !== undefined) {
-      return scores[0];
-    }
+    return [best_score, best_move];
   }
-  return [0, [0, 0]];
 }
 
-export function alphabeta_stone_count_agent(): AIAgent {
+export function alphabeta_agent_stone_count(): AIAgent {
   return {
-    next_move: alphabeta_stone_count_move,
+    next_move: alphabeta_move_stone_count,
   };
 }
 
-function alphabeta_stone_count_move(board: Readonly<Board>): [number, number] {
-  const score = alphabeta_eval_by_search(board, 6);
+function alphabeta_move_stone_count(board: Readonly<Board>): [number, number] {
+  const score = alphabeta_eval_by_search(
+    board,
+    6,
+    100000000,
+    -100000000,
+    stone_count_for_eval
+  );
   return score[1];
 }
 
 function alphabeta_eval_by_search(
   board: Readonly<Board>,
-  depth: number
+  depth: number,
+  max_score: number,
+  min_score: number,
+  input_function: Function
 ): Score {
-  const scores: Score[] = [];
-  const is_black_turn = board.black_turn;
   if (depth <= 1) {
-    const [b_score, w_score] = calc_score(board);
-    if (is_black_turn) {
-      return [b_score, [0, 0]];
-    } else {
-      return [w_score, [0, 0]];
-    }
+    return input_function(board);
   } else {
     const can_put_place = all_valid_moves(board);
-    let alpha = -1;
-    let beta = 65;
+    let best_score: number = -100000000;
+    let best_move: [number, number] = [0, 0];
+
+    if (all_valid_moves(board).length <= 0) {
+      const cannot_put_board = deep_copy_board(board);
+      move_turn(cannot_put_board);
+      return alphabeta_eval_by_search(
+        cannot_put_board,
+        depth - 1,
+        -min_score,
+        -max_score,
+        input_function
+      );
+    }
+
     for (const input_place of can_put_place) {
       const temporary_board = deep_copy_board(board);
-      const [next_board, status] = next_state(temporary_board, input_place);
-
-      if (status !== Gamestatus.Pass) {
-        const score = alphabeta_eval_by_search(next_board, depth - 1);
-        if (depth % 2 === 1 && score[0] > alpha) {
-          alpha = score[0];
-          scores.push([score[0], input_place]);
-        } else if (depth % 2 === 0 && score[0] < beta) {
-          beta = score[0];
-          scores.push([score[0], input_place]);
-        }
-      } else {
-        const score = alphabeta_eval_by_search(next_board, depth - 2);
-        if (depth % 2 === 1 && score[0] > alpha) {
-          alpha = score[0];
-          scores.push([score[0], input_place]);
-        } else if (depth % 2 === 0 && score[0] < beta) {
-          beta = score[0];
-          scores.push([score[0], input_place]);
-        }
+      const next_board = next_state_for_minimax(temporary_board, input_place);
+      const score = alphabeta_eval_by_search(
+        next_board,
+        depth - 1,
+        -best_score,
+        -max_score,
+        input_function
+      );
+      if (-score[0] > max_score) {
+        return [-score[0], input_place];
+      }
+      if (-score[0] > best_score) {
+        [best_score, best_move] = [-score[0], input_place];
       }
     }
-
-    if (depth % 2 === 1) {
-      scores.sort(function (a, b) {
-        if (a[0] > b[0]) return -1;
-        if (a[0] < b[0]) return 1;
-        return 0;
-      });
-      if (scores[0] !== undefined) {
-        return scores[0];
-      }
-    } else if (depth % 2 === 0) {
-      scores.sort(function (a, b) {
-        if (a[0] < b[0]) return -1;
-        if (a[0] > b[0]) return 1;
-        return 0;
-      });
-      if (scores[0] !== undefined) {
-        return scores[0];
-      }
-    }
+    return [best_score, best_move];
   }
-  return [0, [0, 0]];
+}
+
+function stone_count_for_eval(board: Readonly<Board>): Score {
+  const is_black_turn = board.black_turn;
+  const [b_score, w_score] = calc_score(board);
+  if (is_black_turn) {
+    return [b_score, [0, 0]];
+  } else {
+    return [w_score, [0, 0]];
+  }
+}
+
+function enemy_CPP_minimam(board: Readonly<Board>): Score {
+  const score = all_valid_moves(board).length;
+  return [score, [0, 0]];
+}
+
+export function alphabeta_agent_enemy_CPP(): AIAgent {
+  return {
+    next_move: alphabeta_move_enemy_CPP,
+  };
+}
+
+function alphabeta_move_enemy_CPP(board: Readonly<Board>): [number, number] {
+  const score = alphabeta_eval_by_search(
+    board,
+    5,
+    100000000,
+    -100000000,
+    enemy_CPP_minimam
+  );
+  return score[1];
+}
+
+const eval_score_1: number[][] = [
+  [100, -50, 40, 5, 5, 40, -50, 100],
+  [-50, -90, -10, -5, -5, -10, -90, -50],
+  [40, -10, -2, -2, -2, -2, -10, 40],
+  [5, -5, -2, 1, 1, -2, -5, 5],
+  [5, -5, -2, 1, 1, -2, -5, 5],
+  [40, -10, -2, -2, -2, -2, -10, 40],
+  [-50, -90, -10, -5, -5, -10, -90, -50],
+  [100, -50, 40, 5, 5, 40, -50, 100],
+];
+
+function eval_score_count_1(board: Readonly<Board>): Score {
+  const is_black_turn = board.black_turn;
+  let b_score = 0;
+  let w_score = 0;
+
+  board.black.forEach((r, i) => {
+    r.forEach((b, j) => {
+      if (b) {
+        b_score = b_score + eval_score_1[i]![j]!;
+      }
+    });
+  });
+  board.white.forEach((r, i) => {
+    r.forEach((b, j) => {
+      if (b) {
+        w_score = w_score + eval_score_1[i]![j]!;
+      }
+    });
+  });
+  if (is_black_turn) {
+    return [b_score - w_score, [0, 0]];
+  } else {
+    return [w_score - b_score, [0, 0]];
+  }
+}
+
+export function alphabeta_agent_score_count_1(): AIAgent {
+  return {
+    next_move: alphabeta_move_score_count_1,
+  };
+}
+
+function alphabeta_move_score_count_1(
+  board: Readonly<Board>
+): [number, number] {
+  const score = alphabeta_eval_by_search(
+    board,
+    6,
+    100000000,
+    -100000000,
+    eval_score_count_1
+  );
+  return score[1];
 }
