@@ -124,8 +124,7 @@ export function put_start_button(
     draw_board(game.board, game.canvas);
     game.black_player = alphabeta_agent();
     game.white_player = alphabeta_agent();
-    game.message_holder.innerText =
-    '黒の手番です。';
+    game.message_holder.innerText = '黒の手番です。';
   });
 }
 
@@ -137,12 +136,12 @@ export function put_cancel_button(
     game.turn_number = back_to_my_turn(game.board_history, game.turn_number);
     const board = game.board_history[game.turn_number]![0];
     game.board = board;
-    game.now_gaming = true
+    game.now_gaming = true;
     game.start_button.style.display = 'none';
     game.select_black.style.display = 'none';
     game.select_white.style.display = 'none';
     game.select_AIbattle.style.display = 'none';
-    game.message_holder.innerText = create_message(game, Gamestatus.Ok)
+    game.message_holder.innerText = create_message(game, Gamestatus.Ok);
     draw_board(game.board, game.canvas);
   });
 }

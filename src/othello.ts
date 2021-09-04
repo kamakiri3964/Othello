@@ -419,7 +419,7 @@ export function next_state_for_minimax(
     move_turn(board);
     return board;
   }
-  move_turn(board)
+  move_turn(board);
   return board;
 }
 
