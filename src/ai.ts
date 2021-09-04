@@ -5,7 +5,9 @@ import {
   deep_copy_board,
   deep_copy_board_array,
   Gamestatus,
+  move_turn,
   next_state,
+  next_state_for_minimax,
 } from './othello';
 
 export type AIAgent = {
@@ -115,37 +117,21 @@ function alphabeta_eval_by_search(board: Readonly<Board>, depth: number, max_sco
     let best_score:number = -100000000
     let best_move:[number, number] = [0, 0]
 
+    if(all_valid_moves(board).length <= 0){
+      const cannot_put_board = deep_copy_board(board);
+      move_turn(cannot_put_board)
+      return alphabeta_eval_by_search(cannot_put_board, depth - 1, -min_score, -max_score);
+    }
 
     for (const input_place of can_put_place) {
       const temporary_board = deep_copy_board(board);
-      const [next_board, status] = next_state(temporary_board, input_place);
-
-      if (status === Gamestatus.Ok) {
-        const score = alphabeta_eval_by_search(next_board, depth - 1, -best_score, -max_score);
-        if(-score[0] > max_score){
-          return [-score[0], input_place]
-        }
-        if(-score[0] > best_score){ 
-          [best_score,best_move] = [-score[0], input_place]
-        }
-      } 
-      else if(status === Gamestatus.End){
-        const score = alphabeta_eval_by_search(next_board, 1, -best_score, -max_score);
-        if(-score[0] > max_score){
-          return [-score[0], input_place]
-        }
-        if(-score[0] > best_score){ 
-          [best_score,best_move] = [-score[0], input_place]
-        }
+      const next_board= next_state_for_minimax(temporary_board, input_place);
+      const score = alphabeta_eval_by_search(next_board, depth - 1, -best_score, -max_score);
+      if(-score[0] > max_score){
+        return [-score[0], input_place]
       }
-      else if(Gamestatus.Pass){
-        const score = alphabeta_eval_by_search(next_board, depth - 2, max_score, best_score);
-        if(score[0] > max_score){
-          return [score[0], input_place]
-        }
-        if(score[0] > best_score){
-          [best_score,best_move] = [score[0], input_place]
-        }
+      if(-score[0] > best_score){ 
+        [best_score,best_move] = [-score[0], input_place]
       }
     }
     return [best_score, best_move];
