@@ -3,15 +3,8 @@ use std::convert::TryInto;
 use crate::{
     agent::Agent,
     othello::{lsb, Board},
+    search_count::n_search,
 };
-
-pub fn n_search() -> u128 {
-    static mut N_SEARCH: u128 = 0;
-    unsafe {
-        N_SEARCH += 1;
-        N_SEARCH
-    }
-}
 
 #[derive(Clone)]
 pub struct MinMaxAgent {

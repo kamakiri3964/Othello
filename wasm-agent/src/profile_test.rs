@@ -8,6 +8,7 @@ use crate::{
     evaluation::{count_legal, sub_legal_and_last},
     othello::Board,
     reverse::init_reverse,
+    search_count::n_search,
 };
 
 #[test]

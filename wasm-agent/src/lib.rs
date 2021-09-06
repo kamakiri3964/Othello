@@ -4,6 +4,7 @@ pub mod evaluation;
 pub mod minmax_agent;
 pub mod othello;
 pub mod reverse;
+mod search_count;
 
 use alphabeta_agent::AlphaBetaAgent;
 use evaluation::{count_legal, sub_legal, sub_legal_and_last};

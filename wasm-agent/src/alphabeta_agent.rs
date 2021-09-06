@@ -3,15 +3,8 @@ use std::collections::HashMap;
 use crate::{
     agent::Agent,
     othello::{lsb, Board},
+    search_count::n_search,
 };
-
-pub fn n_search() -> u128 {
-    static mut N_SEARCH: u128 = 0;
-    unsafe {
-        N_SEARCH += 1;
-        N_SEARCH
-    }
-}
 
 #[derive(Clone)]
 pub struct AlphaBetaAgent {
@@ -26,7 +19,7 @@ impl AlphaBetaAgent {
 
     /// Returns (next hand (u64), evaluation value (i32))
     /// when depth is 0, returns (0, evaluation value (i32))
-    fn eval_by_search(
+    pub fn eval_by_search(
         &self,
         board: Board,
         depth: usize,
