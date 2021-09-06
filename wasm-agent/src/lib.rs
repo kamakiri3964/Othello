@@ -6,7 +6,7 @@ pub mod othello;
 pub mod reverse;
 
 use alphabeta_agent::AlphaBetaAgent;
-use evaluation::count_legal;
+use evaluation::{count_legal, sub_legal, sub_legal_and_last};
 use othello::Board;
 use reverse::init_reverse;
 use wasm_bindgen::prelude::*;
@@ -20,7 +20,7 @@ pub fn init() {
 
 #[wasm_bindgen]
 pub fn next_move(s: &str) -> String {
-    let mut agent = AlphaBetaAgent::new(6, count_legal);
+    let mut agent = AlphaBetaAgent::new(8, sub_legal_and_last);
     if let Ok(board) = serde_json::from_str::<Board>(s) {
         let m = agent.next(&board);
         let x = m.leading_zeros() / 8;

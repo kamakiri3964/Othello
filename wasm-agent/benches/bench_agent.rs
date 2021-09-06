@@ -1,12 +1,15 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 // use pprof::criterion::{PProfProfiler, Output};
 use wasm_agent::agent::Agent;
+use wasm_agent::alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent};
+use wasm_agent::evaluation::sub_legal_and_last;
 use wasm_agent::minmax_agent::MinMaxAgent;
 use wasm_agent::othello::Board;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let depth = 8;
-    let mut agent = MinMaxAgent::new(depth);
+    // let mut agent = MinMaxAgent::new(depth);
+    let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
     let board_string = r#"   A B C D E F G H
 1 |O|O|O|O|O|O|O| |
 2 |O|X| |X|O|O|O|O|
@@ -21,7 +24,7 @@ next: X
 "#;
     // let board = Board::new();
     let board = Board::parse(board_string);
-    c.bench_function("min max", |b| b.iter(|| agent.next(black_box(&board))));
+    c.bench_function("agent", |b| b.iter(|| agent.next(black_box(&board))));
 }
 
 // not working...

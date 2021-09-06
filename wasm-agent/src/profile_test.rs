@@ -4,8 +4,8 @@ use pprof::protos::Message;
 // use wasm_agent::{agent::Agent, minmax_agent::{MinMaxAgent, n_search}, othello::Board, reverse::init_reverse};
 use crate::{
     agent::Agent,
-    alphabeta_agent::{n_search, AlphaBetaAgent},
-    evaluation::count_legal,
+    alphabeta_agent::{n_search, AlphaBetaAgent, MemoAlphaBetaAgent},
+    evaluation::{count_legal, sub_legal_and_last},
     othello::Board,
     reverse::init_reverse,
 };
@@ -13,10 +13,11 @@ use crate::{
 #[test]
 #[ignore]
 fn test_prof() {
-    let depth = 8;
+    let depth = 10;
     // let mut agent = MinMaxAgent::new(depth);
     // let mut agent = AlphaBetaAgent::new(depth, count_stone);
-    let mut agent = AlphaBetaAgent::new(depth, count_legal);
+    // let mut agent = AlphaBetaAgent::new(depth, sub_legal_and_last);
+    let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
     let board_string = r#"   A B C D E F G H
 1 |O|O|O|O|O|O|O| |
 2 |O|X| |X|O|O|O|O|
@@ -45,11 +46,12 @@ next: X
             profile.encode(&mut content).unwrap();
             file.write_all(&content).unwrap();
 
-            println!("report: {:?}", &report);
+            // println!("report: {:?}", &report);
         }
         Err(_) => {}
     };
     let end = start.elapsed();
-    eprintln!("{}.{:03}sec", end.as_secs(), end.subsec_nanos() / 1_000_000);
-    eprintln!("{}boards", n_search());
+    println!("{}.{:03}sec", end.as_secs(), end.subsec_nanos() / 1_000_000);
+    println!("{}boards", n_search());
+    assert!(false)
 }

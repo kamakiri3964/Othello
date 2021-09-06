@@ -8,8 +8,8 @@ use std::{
 use rand::SeedableRng;
 use wasm_agent::{
     agent::{Agent, RandomAgent},
-    alphabeta_agent::AlphaBetaAgent,
-    evaluation::{count_legal, count_stone},
+    alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent},
+    evaluation::{count_legal, count_stone, sub_legal, sub_legal_and_last},
     minmax_agent::MinMaxAgent,
     othello::{Board, GameStatus},
     reverse::init_reverse,
@@ -56,6 +56,22 @@ fn main() {
         (
             "alphabata_legal",
             Box::new(AlphaBetaAgent::new(6, count_legal)),
+        ),
+        (
+            "alphabata_sub_legal",
+            Box::new(AlphaBetaAgent::new(6, sub_legal)),
+        ),
+        (
+            "alphabata_sub_legal_and_last", // 5
+            Box::new(AlphaBetaAgent::new(6, sub_legal_and_last)),
+        ),
+        (
+            "memoalphabata_sub_legal_and_last", // 6
+            Box::new(MemoAlphaBetaAgent::new(6, sub_legal_and_last)),
+        ),
+        (
+            "alphabata_sub_legal_and_last_8", // 7
+            Box::new(AlphaBetaAgent::new(8, sub_legal_and_last)),
         ),
     ];
 

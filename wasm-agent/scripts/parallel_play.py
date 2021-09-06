@@ -7,6 +7,7 @@ from typing import List
 from collections import defaultdict
 import math
 import time
+import argparse 
 
 
 class Result(Enum):
@@ -87,10 +88,16 @@ def progress_bar(generator, length):
     print(template.format("*" * w, n, length, 100, t1-t0))
 
 def main():
-    blackagent = 2
-    whiteagent = 3
+    parser = argparse.ArgumentParser()
+    parser.add_argument('blackagent', help='0, 1, 2, ...')
+    parser.add_argument('whiteagent', help='0, 1, 2, ...')
+    parser.add_argument('n_game', help='number of games to play [1, 8200]')
+    args = parser.parse_args()    # 4. 引数を解析
+
+    blackagent = int(args.blackagent)
+    whiteagent = int(args.whiteagent)
     # n_opnening = 8200
-    n_opnening = 100
+    n_opnening = int(args.n_game)
     executor = concurrent.futures.ProcessPoolExecutor(max_workers=16)
     futures = [executor.submit(run_game, t, blackagent, whiteagent) for t in range(n_opnening)]
     futures.extend([executor.submit(run_game, t, whiteagent, blackagent) for t in range(n_opnening)])
