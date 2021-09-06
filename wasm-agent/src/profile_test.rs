@@ -4,8 +4,9 @@ use pprof::protos::Message;
 // use wasm_agent::{agent::Agent, minmax_agent::{MinMaxAgent, n_search}, othello::Board, reverse::init_reverse};
 use crate::{
     agent::Agent,
-    alphabeta_agent::{n_search, AlphaBetaAgent, MemoAlphaBetaAgent},
+    alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent},
     evaluation::{count_legal, sub_legal_and_last},
+    negascout_agent::NegaScoutAgent,
     othello::Board,
     reverse::init_reverse,
     search_count::n_search,
@@ -18,7 +19,8 @@ fn test_prof() {
     // let mut agent = MinMaxAgent::new(depth);
     // let mut agent = AlphaBetaAgent::new(depth, count_stone);
     // let mut agent = AlphaBetaAgent::new(depth, sub_legal_and_last);
-    let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
+    // let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
+    let mut agent = NegaScoutAgent::new(depth, sub_legal_and_last);
     let board_string = r#"   A B C D E F G H
 1 |O|O|O|O|O|O|O| |
 2 |O|X| |X|O|O|O|O|

@@ -11,6 +11,7 @@ use wasm_agent::{
     alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent},
     evaluation::{count_legal, count_stone, sub_legal, sub_legal_and_last},
     minmax_agent::MinMaxAgent,
+    negascout_agent::NegaScoutAgent,
     othello::{Board, GameStatus},
     reverse::init_reverse,
 };
@@ -72,6 +73,14 @@ fn main() {
         (
             "alphabata_sub_legal_and_last_8", // 7
             Box::new(AlphaBetaAgent::new(8, sub_legal_and_last)),
+        ),
+        (
+            "negascout_sub_legal_and_last", // 8
+            Box::new(NegaScoutAgent::new(6, sub_legal_and_last)),
+        ),
+        (
+            "negascout_sub_legal_and_last_10", // 9
+            Box::new(NegaScoutAgent::new(10, sub_legal_and_last)),
         ),
     ];
 

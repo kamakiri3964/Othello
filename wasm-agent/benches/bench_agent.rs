@@ -4,12 +4,15 @@ use wasm_agent::agent::Agent;
 use wasm_agent::alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent};
 use wasm_agent::evaluation::sub_legal_and_last;
 use wasm_agent::minmax_agent::MinMaxAgent;
+use wasm_agent::negascout_agent::NegaScoutAgent;
 use wasm_agent::othello::Board;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let depth = 8;
     // let mut agent = MinMaxAgent::new(depth);
-    let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
+    let mut agent = AlphaBetaAgent::new(depth, sub_legal_and_last);
+    // let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
+    // let mut agent = NegaScoutAgent::new(depth, sub_legal_and_last);
     let board_string = r#"   A B C D E F G H
 1 |O|O|O|O|O|O|O| |
 2 |O|X| |X|O|O|O|O|
