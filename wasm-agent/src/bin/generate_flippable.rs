@@ -1,8 +1,12 @@
 use std::io;
 
-use wasm_agent::othello::{lsb, Board};
+use wasm_agent::{
+    othello::{lsb, Board},
+    reverse::init_reverse,
+};
 
 fn main() {
+    init_reverse();
     let mut board_json = String::new();
     io::stdin()
         .read_line(&mut board_json)

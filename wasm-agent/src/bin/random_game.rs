@@ -1,9 +1,11 @@
 use wasm_agent::{
     agent::{Agent, RandomAgent},
     othello::{Board, GameStatus},
+    reverse::init_reverse,
 };
 
 fn main() {
+    init_reverse();
     let mut board = Board::new();
     let mut agents = [
         RandomAgent::new(rand::thread_rng()),

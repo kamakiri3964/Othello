@@ -1,8 +1,12 @@
 use std::io;
 
-use wasm_agent::othello::{parse_coord, Board, GameStatus};
+use wasm_agent::{
+    othello::{parse_coord, Board, GameStatus},
+    reverse::init_reverse,
+};
 
 fn main() {
+    init_reverse();
     let mut board = Board::new();
 
     println!("{}", board);
