@@ -9,6 +9,7 @@ use pprof::protos::Message;
 use crate::{
     agent::Agent,
     alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent},
+    endgame::EndGameAgent,
     evaluation::{count_legal, sub_legal_and_last},
     negascout_agent::NegaScoutAgent,
     othello::Board,
@@ -222,8 +223,9 @@ fn check_endgame_time() {
     init_reverse();
     // let depth = 20;
     let boards = load_boards();
-    // let mut agent = NegaScoutAgent::new(depth, sub_legal_and_last);
-    let mut agent = get_agent();
+    // let mut agent = NegaScoutAgent::new(22, sub_legal_and_last);  // 17: 0.7sec 18: 2.9sec
+    // let mut agent = get_agent();
+    let mut agent = EndGameAgent::new(16); // 20: 0.326sec 21: 3.258sec
     for i in 1..30 {
         let start = Instant::now();
         for board in boards[64 - i].iter().take(3) {

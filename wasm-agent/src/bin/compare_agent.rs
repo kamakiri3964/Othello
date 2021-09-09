@@ -7,8 +7,9 @@ use std::{
 
 use rand::SeedableRng;
 use wasm_agent::{
-    agent::{Agent, RandomAgent},
+    agent::{Agent, CombineAgent, RandomAgent},
     alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent},
+    endgame::EndGameAgent,
     evaluation::{count_legal, count_stone, sub_legal, sub_legal_and_last},
     minmax_agent::MinMaxAgent,
     negascout_agent::NegaScoutAgent,
@@ -81,6 +82,14 @@ fn main() {
         (
             "negascout_sub_legal_and_last_10", // 9
             Box::new(NegaScoutAgent::new(10, sub_legal_and_last)),
+        ),
+        (
+            "negascout_endgame", // 10
+            Box::new(CombineAgent::new(
+                NegaScoutAgent::new(6, sub_legal_and_last),
+                EndGameAgent::new(14),
+                18,
+            )),
         ),
     ];
 
