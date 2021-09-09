@@ -1,5 +1,6 @@
 pub mod agent;
 pub mod alphabeta_agent;
+pub mod endgame;
 pub mod evaluation;
 pub mod minmax_agent;
 pub mod negascout_agent;
