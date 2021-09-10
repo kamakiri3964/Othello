@@ -10,7 +10,10 @@ use wasm_agent::{
     agent::{Agent, CombineAgent, RandomAgent},
     alphabeta_agent::{AlphaBetaAgent, MemoAlphaBetaAgent},
     endgame::EndGameAgent,
-    evaluation::{count_legal, count_stone, sub_legal, sub_legal_and_last},
+    evaluation::{
+        count_legal, count_stone, manual_score, manual_score_sub_legal, sub_legal,
+        sub_legal_and_last,
+    },
     minmax_agent::MinMaxAgent,
     negascout_agent::NegaScoutAgent,
     othello::{Board, GameStatus},
@@ -87,6 +90,26 @@ fn main() {
             "negascout_endgame", // 10
             Box::new(CombineAgent::new(
                 NegaScoutAgent::new(6, sub_legal_and_last),
+                EndGameAgent::new(14),
+                18,
+            )),
+        ),
+        (
+            "manual_score", // 11
+            Box::new(NegaScoutAgent::new(6, manual_score)),
+        ),
+        (
+            "manual_score_endgame", // 12
+            Box::new(CombineAgent::new(
+                NegaScoutAgent::new(6, manual_score),
+                EndGameAgent::new(14),
+                18,
+            )),
+        ),
+        (
+            "manual_score_sub_legal_endgame", // 13
+            Box::new(CombineAgent::new(
+                NegaScoutAgent::new(6, manual_score_sub_legal),
                 EndGameAgent::new(14),
                 18,
             )),
