@@ -1,4 +1,5 @@
 import concurrent.futures
+import os
 import subprocess
 from dataclasses import dataclass
 from enum import Enum
@@ -8,6 +9,7 @@ from collections import defaultdict
 import math
 import time
 import argparse 
+import pathlib
 
 
 class Result(Enum):
@@ -37,7 +39,12 @@ class GameResult:
 
 
 def run_game(opening: int, blackagent: int, whiteagent: int) -> GameResult:
-    cp = subprocess.run(['cargo', 'run', '--bin', 'compare_agent', '--release', '--', str(opening), str(blackagent), str(whiteagent)], encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cp = subprocess.run(
+        ['cargo', 'run', '--bin', 'compare_agent', '--release', '--', str(opening), str(blackagent), str(whiteagent)],
+        encoding='utf-8',
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=pathlib.Path(os.path.abspath(__file__)).parent.parent.parent)
     if cp.returncode != 0:
         print(cp.stderr)
     else:

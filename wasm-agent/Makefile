@@ -3,6 +3,7 @@ BINDIR= $(SRCDIR)/bin
 SRCS = $(wildcard $(SRCDIR)/*.rs) 
 CONF = Cargo.toml
 DATADIR= data
+ARGS =
 
 $(DATADIR)/random_boards.jsonl: $(BINDIR)/generate_random_boards.rs $(SRCS)
 	cargo run --bin generate_random_boards > $(DATADIR)/random_boards.jsonl
@@ -21,6 +22,10 @@ profile.pb: $(SRCS)
 
 profile: profile.pb
 	go tool pprof -http localhost:8080 profile.pb
+
+.PHONY: compare
+compare:
+	cd scripts && poetry run python scripts/parallel_play.py ${ARGS}
 
 .PHONY: test
 test: $(SRCS) $(CONF)
