@@ -48,31 +48,6 @@ export function generate_initial_board(): Board {
   return board;
 }
 
-/*
-//その時の盤面を表示
-export function stringify_board(board: Board): string {
-  let Hyouji = `   a b c d e f g h
-   - - - - - - - -
-`;
-  board.black.forEach((r, i) => {
-    Hyouji = Hyouji + String(i + 1) + ' |';
-    r.forEach((b, j) => {
-      let c = ' ';
-      if (board.white[i]![j]) {
-        c = 'o';
-      }
-      if (b) {
-        c = 'x';
-      }
-      Hyouji = Hyouji + c + '|';
-    });
-    Hyouji = Hyouji + '\n';
-  });
-  Hyouji = Hyouji + '   - - - - - - - -' + '\n';
-  return Hyouji;
-}
-*/
-
 // [黒の石数, 白の石数]を返す
 export function calc_score(board: Board): [number, number] {
   let b_score = 0;
@@ -434,41 +409,6 @@ export function update_history(
   board_history.push([next_board, status]);
   return turn_number + 1;
 }
-
-//現在の盤面と次の着手が与えられて次の盤面をhistoryに保存する
-/*
-export function keep_next_state(
-  board: Readonly<Board>,
-  p: [number, number],
-  board_history: Board_history,
-  turn_number: number
-):number{
-  let temporary_board = deep_copy_board(board_history[turn_number]![0])
-  if (is_valid_move(p, temporary_board) && put_stone(p, board.black_turn, temporary_board)) {
-    const can_flip_places = flipable_all_places(p, board);
-    for (const elements of can_flip_places) {
-      flip_stone(elements, temporary_board);
-    }
-    temporary_board = move_turn(temporary_board);
-    if (all_valid_moves(temporary_board).length > 0) {
-      const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Ok, turn_number);
-      return put_number
-    }
-
-    if (all_valid_moves(temporary_board).length === 0) {
-      temporary_board = move_turn(temporary_board);
-      if (all_valid_moves(temporary_board).length === 0) {
-        const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.End, turn_number);
-        return put_number
-      } else {
-        const put_number = add_board_history(deep_copy_board(temporary_board), board_history, Gamestatus.Pass, turn_number);
-        return put_number;
-      }
-    }
-  }
-  return turn_number
-}
-*/
 
 export function deep_copy_board_array(
   board_array: Readonly<BoardArray>
