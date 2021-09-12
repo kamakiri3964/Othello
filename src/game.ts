@@ -70,20 +70,20 @@ export function register_mouse_input_listner(game: Game): void {
   });
 }
 
-export function choice_AI(computer: string):AIAgent{
-  if(computer === "CP1"){
-    return new_random_player()
+export function choice_AI(computer: string): AIAgent {
+  if (computer === 'CP1') {
+    return new_random_player();
   }
-  if(computer === "CP2"){
-    return alphabeta_agent_stone_count()
+  if (computer === 'CP2') {
+    return alphabeta_agent_stone_count();
   }
-  if(computer === "CP3"){
-    return alphabeta_agent_enemy_CPP()
+  if (computer === 'CP3') {
+    return alphabeta_agent_enemy_CPP();
   }
-  if(computer === "CP4"){
-    return alphabeta_agent_score_count_1()
+  if (computer === 'CP4') {
+    return alphabeta_agent_score_count_1();
   }
-  return new_random_player()
+  return new_random_player();
 }
 
 export function put_start_button(
@@ -97,7 +97,7 @@ export function put_start_button(
   first_AIselect_form: HTMLFormElement,
   second_AIselect_box: HTMLSelectElement,
   second_AIselect_form: HTMLFormElement,
-  fix_AI: HTMLButtonElement,
+  fix_AI: HTMLButtonElement
 ): void {
   start_button.addEventListener('click', (e: MouseEvent) => {
     game.now_gaming = true;
@@ -132,7 +132,7 @@ export function put_start_button(
       game.white_player = choice_AI(second_AIselect_box.value);
       game.message_holder.innerText =
         'さあゲームを始めましょう。' + '\n' + 'あなた(黒)の手番です。';
-    })
+    });
   });
   select_white.addEventListener('click', (e: MouseEvent) => {
     game.start_button.style.display = 'none';
@@ -151,9 +151,8 @@ export function put_start_button(
       draw_board(game.board, game.canvas);
       game.black_player = choice_AI(first_AIselect_box.value);
       game.white_player = 'user';
-      game.message_holder.innerText =
-        '黒の手番です。';
-    })
+      game.message_holder.innerText = '黒の手番です。';
+    });
   });
   select_AIbattle.addEventListener('click', (e: MouseEvent) => {
     game.start_button.style.display = 'none';
@@ -174,9 +173,8 @@ export function put_start_button(
       draw_board(game.board, game.canvas);
       game.black_player = choice_AI(first_AIselect_box.value);
       game.white_player = choice_AI(second_AIselect_box.value);
-      game.message_holder.innerText =
-        '黒の手番です。';
-    })
+      game.message_holder.innerText = '黒の手番です。';
+    });
   });
 }
 
@@ -259,8 +257,8 @@ export function create_game(
 
 function wait(sec: number) {
   let start_time = performance.now();
-  while(performance.now() - start_time < sec){}
-};
+  while (performance.now() - start_time < sec) {}
+}
 
 function update_state(game: Game): boolean {
   if (game.board.black_turn) {

@@ -50,9 +50,7 @@ const main = () => {
   const second_AIselect_box = document.getElementById(
     'second_AIselect_box'
   ) as HTMLSelectElement;
-  const fix_AI = document.getElementById(
-    'fix_AI'
-  ) as HTMLButtonElement;
+  const fix_AI = document.getElementById('fix_AI') as HTMLButtonElement;
 
   cancel_button.style.display = 'none';
   fix_AI.style.display = 'none';
