@@ -38,9 +38,26 @@ const main = () => {
   const select_AIbattle = document.getElementById(
     'select_AIbattle'
   ) as HTMLButtonElement;
+  const first_AIselect_form = document.getElementById(
+    'first_AIselect_form'
+  ) as HTMLFormElement;
+  const second_AIselect_form = document.getElementById(
+    'second_AIselect_form'
+  ) as HTMLFormElement;
+  const first_AIselect_box = document.getElementById(
+    'first_AIselect_box'
+  ) as HTMLSelectElement;
+  const second_AIselect_box = document.getElementById(
+    'second_AIselect_box'
+  ) as HTMLSelectElement;
+  const fix_AI = document.getElementById(
+    'fix_AI'
+  ) as HTMLButtonElement;
 
-  start_button.style.display = 'none';
   cancel_button.style.display = 'none';
+  fix_AI.style.display = 'none';
+  first_AIselect_form.style.display = 'none';
+  second_AIselect_form.style.display = 'none';
 
   const game = create_game(
     canvas,
@@ -49,7 +66,12 @@ const main = () => {
     cancel_button,
     select_black,
     select_white,
-    select_AIbattle
+    select_AIbattle,
+    first_AIselect_box,
+    first_AIselect_form,
+    second_AIselect_box,
+    second_AIselect_form,
+    fix_AI
   );
   put_cancel_button(game, game.cancel_button);
   draw_board(game.board, canvas);

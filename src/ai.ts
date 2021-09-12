@@ -150,7 +150,7 @@ function alphabeta_eval_by_search(
         -max_score,
         input_function
       );
-      if (-score[0] > max_score) {
+      if (-score[0] >= max_score) {
         return [-score[0], input_place];
       }
       if (-score[0] > best_score) {
@@ -194,14 +194,14 @@ function alphabeta_move_enemy_CPP(board: Readonly<Board>): [number, number] {
 }
 
 const eval_score_1: number[][] = [
-  [100, -50, 40, 5, 5, 40, -50, 100],
+  [200, -50, 40, 5, 5, 40, -50, 200],
   [-50, -90, -10, -5, -5, -10, -90, -50],
   [40, -10, -2, -2, -2, -2, -10, 40],
   [5, -5, -2, 1, 1, -2, -5, 5],
   [5, -5, -2, 1, 1, -2, -5, 5],
   [40, -10, -2, -2, -2, -2, -10, 40],
   [-50, -90, -10, -5, -5, -10, -90, -50],
-  [100, -50, 40, 5, 5, 40, -50, 100],
+  [200, -50, 40, 5, 5, 40, -50, 200],
 ];
 
 function eval_score_count_1(board: Readonly<Board>): Score {
