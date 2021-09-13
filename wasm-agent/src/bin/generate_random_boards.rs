@@ -24,7 +24,7 @@ fn main() {
     //let mut agent = RandomAgent::new(rand::thread_rng());
     let mut agent = RandomAgent::new(rand_xoshiro::Xoshiro256StarStar::seed_from_u64(123));
     for _ in 0..n {
-        let p = agent.next(&board);
+        let (p, _) = agent.next(&board);
         match board.next(p) {
             Ok((b, status)) => {
                 board = b;

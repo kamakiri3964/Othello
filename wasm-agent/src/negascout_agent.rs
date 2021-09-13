@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
     agent::Agent,
     othello::{lsb, Board},
@@ -7,12 +9,12 @@ use crate::{
 #[derive(Clone)]
 pub struct NegaScoutAgent {
     depth: usize,
-    eval: fn(&Board) -> i32,
+    eval: Rc<dyn Fn(&Board) -> i32>,
     // order: fn(&Board) -> i32,
 }
 
 impl NegaScoutAgent {
-    pub fn new(depth: usize, eval: fn(&Board) -> i32) -> Self {
+    pub fn new(depth: usize, eval: Rc<dyn Fn(&Board) -> i32>) -> Self {
         NegaScoutAgent { depth, eval }
     }
 
@@ -93,14 +95,13 @@ impl NegaScoutAgent {
 }
 
 impl Agent for NegaScoutAgent {
-    fn next(&mut self, board: &Board) -> u64 {
-        let (hand, _) = self.eval_by_search(
+    fn next(&mut self, board: &Board) -> (u64, i32) {
+        self.eval_by_search(
             board.clone(),
             self.depth,
             i32::min_value() + 1,
             i32::max_value(),
-        );
-        hand
+        )
     }
 }
 
@@ -109,6 +110,7 @@ mod tests {
     use std::{
         fs::File,
         io::{BufRead, BufReader},
+        rc::Rc,
     };
 
     use crate::{
@@ -124,7 +126,7 @@ mod tests {
     fn compare_to_alph_beta() {
         init_reverse();
         let depth = 6;
-        let negascoutagent = NegaScoutAgent::new(depth, count_stone);
+        let negascoutagent = NegaScoutAgent::new(depth, Rc::new(count_stone));
         let agent = AlphaBetaAgent::new(depth, count_stone);
         let mut boards = Vec::new();
         if let Ok(file) = File::open("./data/random_boards.jsonl") {

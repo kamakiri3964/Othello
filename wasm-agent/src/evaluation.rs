@@ -31,7 +31,7 @@ const MANUAL_SCORE: [i32; 64] = [
     -10, 40, -50, -90, -10, -5, -5, -10, -90, -50, 100, -50, 40, 5, 5, 40, -50, 100,
 ];
 
-struct BoardIdxIterator {
+pub struct BoardIdxIterator {
     board: u64,
 }
 

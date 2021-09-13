@@ -15,7 +15,7 @@ fn main() {
     println!("{}", board);
 
     loop {
-        let p = agents[if board.is_player_black { 0 } else { 1 }].next(&board);
+        let (p, _) = agents[if board.is_player_black { 0 } else { 1 }].next(&board);
         match board.next(p) {
             Ok((b, status)) => {
                 board = b;

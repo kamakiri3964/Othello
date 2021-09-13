@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader, Write},
+    rc::Rc,
     time::{Duration, Instant},
 };
 
@@ -62,7 +63,7 @@ fn get_agent() -> Box<dyn Agent> {
     // let mut agent = AlphaBetaAgent::new(depth, count_stone);
     // let mut agent = AlphaBetaAgent::new(depth, sub_legal_and_last);
     // let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
-    let agent = NegaScoutAgent::new(depth, sub_legal_and_last);
+    let agent = NegaScoutAgent::new(depth, Rc::new(sub_legal_and_last));
     Box::new(agent)
 }
 
@@ -74,7 +75,7 @@ fn test_prof() {
     // let mut agent = AlphaBetaAgent::new(depth, count_stone);
     // let mut agent = AlphaBetaAgent::new(depth, sub_legal_and_last);
     // let mut agent = MemoAlphaBetaAgent::new(depth, sub_legal_and_last);
-    let mut agent = NegaScoutAgent::new(depth, sub_legal_and_last);
+    let mut agent = NegaScoutAgent::new(depth, Rc::new(sub_legal_and_last));
     let board_string = r#"   A B C D E F G H
 1 |O|O|O|O|O|O|O| |
 2 |O|X| |X|O|O|O|O|

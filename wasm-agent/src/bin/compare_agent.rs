@@ -3,6 +3,7 @@ use std::{
     env,
     fs::File,
     io::{BufRead, BufReader},
+    rc::Rc,
 };
 
 use rand::SeedableRng;
@@ -15,6 +16,7 @@ use wasm_agent::{
         sub_legal_and_last,
     },
     minmax_agent::MinMaxAgent,
+    ml_agent::{load_weight, MLAgent},
     negascout_agent::NegaScoutAgent,
     othello::{Board, GameStatus},
     reverse::init_reverse,
@@ -80,28 +82,28 @@ fn main() {
         ),
         (
             "negascout_sub_legal_and_last", // 8
-            Box::new(NegaScoutAgent::new(6, sub_legal_and_last)),
+            Box::new(NegaScoutAgent::new(6, Rc::new(sub_legal_and_last))),
         ),
         (
             "negascout_sub_legal_and_last_10", // 9
-            Box::new(NegaScoutAgent::new(10, sub_legal_and_last)),
+            Box::new(NegaScoutAgent::new(10, Rc::new(sub_legal_and_last))),
         ),
         (
             "negascout_endgame", // 10
             Box::new(CombineAgent::new(
-                NegaScoutAgent::new(6, sub_legal_and_last),
+                NegaScoutAgent::new(6, Rc::new(sub_legal_and_last)),
                 EndGameAgent::new(14),
                 18,
             )),
         ),
         (
             "manual_score", // 11
-            Box::new(NegaScoutAgent::new(6, manual_score)),
+            Box::new(NegaScoutAgent::new(6, Rc::new(manual_score))),
         ),
         (
             "manual_score_endgame", // 12
             Box::new(CombineAgent::new(
-                NegaScoutAgent::new(6, manual_score),
+                NegaScoutAgent::new(6, Rc::new(manual_score)),
                 EndGameAgent::new(14),
                 18,
             )),
@@ -109,9 +111,16 @@ fn main() {
         (
             "manual_score_sub_legal_endgame", // 13
             Box::new(CombineAgent::new(
-                NegaScoutAgent::new(6, manual_score_sub_legal),
+                NegaScoutAgent::new(6, Rc::new(manual_score_sub_legal)),
                 EndGameAgent::new(14),
                 18,
+            )),
+        ),
+        (
+            "manual_score_ml", // 14
+            Box::new(MLAgent::new(
+                6,
+                load_weight("AADIQgAASMIAACBCAACgQAAAtMIAACDBAACgwAAAAMAAAADAAACAPw==").unwrap(),
             )),
         ),
     ];
@@ -132,7 +141,7 @@ fn main() {
     // println!("{}", board);
 
     loop {
-        let p = agents[if board.is_player_black { 0 } else { 1 }]
+        let (p, _) = agents[if board.is_player_black { 0 } else { 1 }]
             .as_mut()
             .next(&board);
         match board.next(p) {

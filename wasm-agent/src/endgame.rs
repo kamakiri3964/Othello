@@ -167,8 +167,12 @@ impl EndGameAgent {
 }
 
 impl Agent for EndGameAgent {
-    fn next(&mut self, board: &Board) -> u64 {
-        let (hand, _) = self.win(board.clone(), false, 0);
-        hand
+    fn next(&mut self, board: &Board) -> (u64, i32) {
+        let (hand, r) = self.win(board.clone(), false, 0);
+        match r {
+            Result::Win => (hand, 30000),
+            Result::Lose => (hand, -30000),
+            Result::Draw => (hand, 0),
+        }
     }
 }

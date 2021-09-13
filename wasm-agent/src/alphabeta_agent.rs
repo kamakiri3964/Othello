@@ -61,14 +61,14 @@ impl AlphaBetaAgent {
 }
 
 impl Agent for AlphaBetaAgent {
-    fn next(&mut self, board: &Board) -> u64 {
-        let (hand, _) = self.eval_by_search(
+    fn next(&mut self, board: &Board) -> (u64, i32) {
+        let (hand, score) = self.eval_by_search(
             board.clone(),
             self.depth,
             i32::min_value() + 1,
             i32::max_value(),
         );
-        hand
+        (hand, score)
     }
 }
 
@@ -166,14 +166,14 @@ impl MemoAlphaBetaAgent {
 }
 
 impl Agent for MemoAlphaBetaAgent {
-    fn next(&mut self, board: &Board) -> u64 {
-        let (hand, _) = self.eval_by_search(
+    fn next(&mut self, board: &Board) -> (u64, i32) {
+        let (hand, score) = self.eval_by_search(
             board.clone(),
             self.depth,
             i32::min_value() + 1,
             i32::max_value(),
         );
-        hand
+        (hand, score)
     }
 }
 
@@ -258,8 +258,8 @@ next: X
             }
         }
         for (idx, board) in boards.iter().take(100).enumerate() {
-            let actual = agent.next(&board);
-            let expected = memoagent.next(&board);
+            let (actual, _) = agent.next(&board);
+            let (expected, _) = memoagent.next(&board);
             if expected != actual {
                 println!("{}", board);
                 let b = Board {

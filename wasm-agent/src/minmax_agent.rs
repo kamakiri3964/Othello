@@ -55,9 +55,8 @@ impl MinMaxAgent {
 }
 
 impl Agent for MinMaxAgent {
-    fn next(&mut self, board: &Board) -> u64 {
-        let (hand, _) = self.eval_by_search(board.clone(), self.depth);
-        hand
+    fn next(&mut self, board: &Board) -> (u64, i32) {
+        self.eval_by_search(board.clone(), self.depth)
     }
 }
 

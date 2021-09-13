@@ -3,7 +3,7 @@ use dyn_clone::DynClone;
 use rand::Rng;
 
 pub trait Agent: DynClone {
-    fn next(&mut self, board: &Board) -> u64;
+    fn next(&mut self, board: &Board) -> (u64, i32);
 }
 
 dyn_clone::clone_trait_object!(Agent);
@@ -29,7 +29,7 @@ impl<T> Agent for RandomAgent<T>
 where
     T: Rng + Clone,
 {
-    fn next(&mut self, board: &Board) -> u64 {
+    fn next(&mut self, board: &Board) -> (u64, i32) {
         let mut legal = board.legal();
         let i = self.rng.gen_range(0..legal.count_ones());
         let mut h = lsb(legal);
@@ -37,7 +37,7 @@ where
             legal ^= h;
             h = lsb(legal);
         }
-        h
+        (h, 0)
     }
 }
 
@@ -71,7 +71,7 @@ where
     MID: Agent + Clone,
     END: Agent + Clone,
 {
-    fn next(&mut self, board: &Board) -> u64 {
+    fn next(&mut self, board: &Board) -> (u64, i32) {
         if (board.player ^ board.opponent).count_ones() >= (64 - self.endgame_turn) as u32 {
             self.end.next(board)
         } else {
