@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start-game": "ts-node -O '{\"module\": \"commonjs\"}' src/main.ts",
-    "build": "webpack",
+    "build": "webpack --mode=production",
     "serve": "webpack serve",
     "format": "prettier --write ./src",
     "test": "jest"
@@ -23,9 +23,12 @@
   "homepage": "https://github.com/kamakiri3964/Othello#readme",
   "devDependencies": {
     "@types/jest": "^26.0.24",
+    "@types/json-bigint": "^1.0.1",
     "@types/node": "^16.4.11",
+    "@wasm-tool/wasm-pack-plugin": "^1.5.0",
     "html-webpack-plugin": "^5.3.2",
     "jest": "^27.0.6",
+    "json-bigint": "^1.0.0",
     "prettier": "^2.3.2",
     "ts-jest": "^27.0.4",
     "ts-loader": "^9.2.5",

@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 module.exports = {
   entry: {
@@ -14,7 +15,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.ts', '.js', '.json'],
+    extensions: ['.ts', '.js', '.json', '.wasm'],
   },
   target: ["web"],
   mode: process.env.NODE_ENV || "development",
@@ -29,5 +30,12 @@ module.exports = {
       title: 'Othello',
       template: 'src/index.html'
     }),
+    new WasmPackPlugin({
+      crateDirectory: path.join(__dirname, './wasm-agent'),
+      outDir: path.join(__dirname, "pkg")
+    })
   ],
+  experiments: {
+    asyncWebAssembly: true,
+  }
 };
