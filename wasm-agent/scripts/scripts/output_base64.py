@@ -2,7 +2,7 @@ import numpy as np
 import base64
 
 def main():
-    a = np.array([0.111111, 0.21111, 1.68838383, -5.3823412], dtype=np.float32)
+    a = np.array([100.0, -50.0, 40.0, 5.0, -90.0, -10.0, -5.0, -2.0, -2.0, 1], dtype=np.float32)
     print(a)
     b = base64.b64encode(a)
     s = str(b, 'utf-8')
