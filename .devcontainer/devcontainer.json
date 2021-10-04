@@ -1,0 +1,27 @@
+{
+    "name": "othello",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "..",
+    },
+    "containerUser": "bob",
+    "updateRemoteUserUID": true,
+    "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+            "bash": {
+                "path": "/bin/bash",
+                "args": [
+                    "-l"
+                ]
+            },
+        }
+    },
+    "extensions": [
+        "ms-python.python",
+    ],
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/home/isucon/.ssh,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.gitconfig,target=/home/isucon/.gitconfig,type=bind,consistency=cached",
+    ]
+}
