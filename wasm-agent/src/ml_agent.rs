@@ -84,22 +84,18 @@ impl MLAgent {
             }
         }
         Rc::new(move |board| {
-            if (board.player ^ board.opponent).count_zeros() == 0 {
-                board.player.count_ones() as i32
-            } else {
-                let mut score = 0.;
-                for idx in BoardIdxIterator::new(board.player) {
-                    unsafe {
-                        score += weight.get_unchecked(idx);
-                    }
+            let mut score = 0.;
+            for idx in BoardIdxIterator::new(board.player) {
+                unsafe {
+                    score += weight.get_unchecked(idx);
                 }
-                for idx in BoardIdxIterator::new(board.opponent) {
-                    unsafe {
-                        score -= weight.get_unchecked(idx);
-                    }
-                }
-                score.round() as i32
             }
+            for idx in BoardIdxIterator::new(board.opponent) {
+                unsafe {
+                    score -= weight.get_unchecked(idx);
+                }
+            }
+            score.round() as i32
         })
     }
 }
